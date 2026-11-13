@@ -49,14 +49,18 @@ export const requestPasswordReset = async (
     expiresAt,
   });
 
-  const resetUrl =
-    `${env.FRONTEND_URL}/reset-password?token=${rawToken}`;
+  const resetUrl = new URL(
+  "/reset-password",
+  env.FRONTEND_URL
+);
+
+resetUrl.searchParams.set("token", rawToken);
 
   try {
     await sendPasswordResetEmail({
       email: user.email,
       name: user.name,
-      resetUrl,
+      resetUrl: resetUrl.toString(),
     });
   } catch (error) {
     // Remove token if email delivery fails.
@@ -82,60 +86,55 @@ export const resetUserPassword = async (
 
   const session = await User.startSession();
 
-  try {
-    await session.withTransaction(async () => {
-      // Find a valid, unexpired reset token.
-      const resetRecord = await PasswordReset.findOne({
-        tokenHash,
-        expiresAt: { $gt: new Date() },
-      }).session(session);
+try {
+  await session.withTransaction(async () => {
+    // Atomically find and consume a valid reset token.
+    // If the transaction fails, this deletion is rolled back.
+    const resetRecord = await PasswordReset.findOneAndDelete({
+      tokenHash,
+      expiresAt: { $gt: new Date() },
+    }).session(session);
 
-      if (!resetRecord) {
-        throw Object.assign(
-          new Error("Invalid or expired password reset link"),
-          { statusCode: 400 }
-        );
-      }
-
-      // Update password and invalidate existing sessions.
-      const user = await User.findOneAndUpdate(
-        {
-          _id: resetRecord.userId,
-          isActive: true,
-        },
-        {
-          $set: {
-            password: hashedPassword,
-            mustChangePassword: false,
-          },
-          $inc: {
-            authVersion: 1,
-          },
-        },
-        {
-          new: true,
-          session,
-        }
+    if (!resetRecord) {
+      throw Object.assign(
+        new Error("Invalid or expired password reset link"),
+        { statusCode: 400 }
       );
+    }
 
-      if (!user) {
-        throw Object.assign(
-          new Error("Unable to reset password"),
-          { statusCode: 400 }
-        );
+    // Update password and invalidate existing sessions.
+    const user = await User.findOneAndUpdate(
+      {
+        _id: resetRecord.userId,
+        isActive: true,
+      },
+      {
+        $set: {
+          password: hashedPassword,
+        },
+        $inc: {
+          authVersion: 1,
+        },
+      },
+      {
+        new: true,
+        session,
       }
+    );
 
-      // Consume the reset token only after successful password update.
-      await PasswordReset.deleteOne({
-        _id: resetRecord._id,
-      }).session(session);
+    if (!user) {
+      throw Object.assign(
+        new Error("Unable to reset password"),
+        { statusCode: 400 }
+      );
+    }
 
-      // Invalidate any other outstanding reset links.
-      await PasswordReset.deleteMany({
-        userId: resetRecord.userId,
-      }).session(session);
-    });
-  } finally {
-    await session.endSession();
-  }
+    // Invalidate any other outstanding reset links.
+    await PasswordReset.deleteMany({
+      userId: resetRecord.userId,
+    }).session(session);
+  });
+} finally {
+  await session.endSession();
+}
 };

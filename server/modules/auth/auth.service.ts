@@ -102,7 +102,6 @@ export const serializeUser = (user: {
   email: string;
   role: string;
   isActive: boolean;
-  mustChangePassword: boolean;
 }) => ({
   id: String(user._id),
   name: user.name,
@@ -110,5 +109,4 @@ export const serializeUser = (user: {
   email: user.email,
   role: user.role,
   isActive: user.isActive,
-  mustChangePassword: user.mustChangePassword,
 });

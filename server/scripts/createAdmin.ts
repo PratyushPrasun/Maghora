@@ -95,7 +95,6 @@ const createAdmin = async (): Promise<void> => {
       email,
       password: hashedPassword,
       role: "super_admin",
-      mustChangePassword: false,
       isActive: true,
       authVersion: 0,
     });

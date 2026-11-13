@@ -19,16 +19,12 @@ import { validate } from "../../middlewares/validate.js";
 import { authenticate } from "../../middlewares/authenticate.js";
 import { authorize } from "../../middlewares/authorize.js";
 
-import {
-  requirePasswordChangeComplete,
-} from "../../middlewares/requirePasswordChange.js";
 
 const router = Router();
 
 // Every admin-management route requires a fully authenticated Super Admin.
 router.use(
   authenticate,
-  requirePasswordChangeComplete,
   authorize("super_admin")
 );
 
