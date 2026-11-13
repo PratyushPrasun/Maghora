@@ -20,6 +20,9 @@ import { errorHandler } from "./middlewares/errorHandler.js";
 import type { Server } from "node:http";
 import authRoutes from "./modules/auth/auth.routes.js";
 import adminRoutes from "./modules/admins/admin.routes.js";
+import productRoutes from "./modules/products/product.routes.js";
+import categoryRoutes from "./modules/categories/category.routes.js";
+import cartRoutes from "./modules/cart/cart.routes.js";
 
 let server: Server | null = null;
 let isShuttingDown = false;
@@ -42,6 +45,14 @@ const startServer = async (): Promise<void> => {
 
     // Administrator management routes.
     app.use("/api/admins", adminRoutes);
+
+    // Category routes.
+    app.use("/api/categories", categoryRoutes);
+
+    // Product routes.
+    app.use("/api/products", productRoutes);
+
+    app.use("/api/cart", cartRoutes);
 
     app.get("/api/health", (_req, res) => {
       res.status(200).json({

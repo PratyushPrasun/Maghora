@@ -30,7 +30,9 @@ const getAdminOrThrow = async (
     );
   }
 
-  const admin = await User.findById(id).session(session);
+const admin = await User.findById(id)
+  .select("+authVersion")
+  .session(session);
 
   if (!admin || admin.role !== "admin") {
     throw Object.assign(
@@ -85,7 +87,6 @@ export const createAdmin = async (
             password: hashedPassword,
             role: "admin",
             isActive: true,
-            mustChangePassword: true,
             authVersion: 0,
           },
         ],
@@ -133,7 +134,7 @@ export const listAdmins = async (
   const [admins, total] = await Promise.all([
     User.find({ role: "admin" })
       .select(
-        "name phone email role isActive mustChangePassword createdAt updatedAt"
+        "name phone email role isActive createdAt updatedAt"
       )
       .sort({ createdAt: -1 })
       .skip(skip)

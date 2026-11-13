@@ -209,7 +209,6 @@ export const changePassword = async (
   );
 
   user.password = newPasswordHash;
-  user.mustChangePassword = false;
   user.authVersion += 1;
 
   await user.save();
