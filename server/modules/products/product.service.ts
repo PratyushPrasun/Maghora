@@ -1,6 +1,4 @@
-import mongoose, {
-  type Types,
-} from "mongoose";
+import mongoose from "mongoose";
 
 import Product from "./product.model.js";
 import Category from "../categories/category.model.js";
@@ -13,6 +11,10 @@ import {
   getCachedData,
   invalidateCatalogueCache,
 } from "../../services/catalogue-cache.service.js";
+
+// --------------------------------------------------
+// HELPERS
+// --------------------------------------------------
 
 const createSlug = (value: string): string => {
   return value
@@ -42,9 +44,7 @@ const isDuplicateKeyError = (error: unknown): boolean => {
   );
 };
 
-const validateCategory = async (
-  categoryId: string
-) => {
+const validateCategory = async (categoryId: string) => {
   if (!mongoose.isValidObjectId(categoryId)) {
     throw badRequest("Invalid category ID");
   }
@@ -72,27 +72,35 @@ const buildProductSlug = (name: string): string => {
   return slug;
 };
 
-// Create product.
+// --------------------------------------------------
+// CREATE PRODUCT
+// --------------------------------------------------
+
+export interface CreateProductInput {
+  name: string;
+  description: string;
+  shortDescription?: string;
+  category: string;
+
+  variants: {
+    sku: string;
+    weightGrams: number;
+    pricePaise: number;
+    mrpPaise: number;
+    stockOnHand: number;
+    isActive: boolean;
+  }[];
+
+  isFeatured?: boolean;
+
+  seo?: {
+    title?: string;
+    description?: string;
+  };
+}
+
 export const createProduct = async (
-  data: {
-    name: string;
-    description: string;
-    shortDescription?: string;
-    category: string;
-    variants: {
-      sku: string;
-      weightGrams: number;
-      pricePaise: number;
-      mrpPaise: number;
-      stock: number;
-      isActive: boolean;
-    }[];
-    isFeatured?: boolean;
-    seo?: {
-      title?: string;
-      description?: string;
-    };
-  },
+  data: CreateProductInput,
   uploadedImages: UploadedImage[]
 ) => {
   await validateCategory(data.category);
@@ -114,7 +122,19 @@ export const createProduct = async (
         sortOrder: index,
       })),
 
-      variants: data.variants,
+      variants: data.variants.map((variant) => ({
+        sku: variant.sku,
+        weightGrams: variant.weightGrams,
+        pricePaise: variant.pricePaise,
+        mrpPaise: variant.mrpPaise,
+        isActive: variant.isActive,
+
+        // Initial physical inventory.
+        stockOnHand: variant.stockOnHand ?? 0,
+
+        // Reserved stock is never supplied during product creation.
+        reservedStock: 0,
+      })),
 
       isFeatured: data.isFeatured ?? false,
 
@@ -138,7 +158,10 @@ export const createProduct = async (
   }
 };
 
-// List products.
+// --------------------------------------------------
+// LIST PRODUCTS
+// --------------------------------------------------
+
 export interface ProductListOptions {
   page: number;
   limit: number;
@@ -169,7 +192,12 @@ export const listProducts = async (
       );
 
       filter.$or = [
-        { name: { $regex: escapedSearch, $options: "i" } },
+        {
+          name: {
+            $regex: escapedSearch,
+            $options: "i",
+          },
+        },
         {
           shortDescription: {
             $regex: escapedSearch,
@@ -247,14 +275,15 @@ export const listProducts = async (
     ]);
 
     return {
-  products: products.map(toPublicProduct),
-  pagination: {
-    total,
-    page: options.page,
-    limit: options.limit,
-    totalPages: Math.ceil(total / options.limit),
-  },
-};
+      products: products.map(toPublicProduct),
+
+      pagination: {
+        total,
+        page: options.page,
+        limit: options.limit,
+        totalPages: Math.ceil(total / options.limit),
+      },
+    };
   };
 
   // Admin listings are not cached.
@@ -269,10 +298,11 @@ export const listProducts = async (
   );
 };
 
-// Get product details.
-export const getProductBySlug = async (
-  slug: string
-) => {
+// --------------------------------------------------
+// GET PRODUCT BY SLUG
+// --------------------------------------------------
+
+export const getProductBySlug = async (slug: string) => {
   return getCachedData(
     "products",
     { productSlug: slug },
@@ -289,39 +319,43 @@ export const getProductBySlug = async (
         throw notFound("Product not found");
       }
 
-      // Hide inactive variants from public catalogue.
-      product.variants = product.variants.filter(
-        (variant) => variant.isActive
-      );
-
       return toPublicProduct(product);
     }
   );
 };
 
-// Update product.
+// --------------------------------------------------
+// UPDATE PRODUCT
+// --------------------------------------------------
+
+export interface UpdateProductInput {
+  name?: string;
+  description?: string;
+  shortDescription?: string;
+  category?: string;
+
+  variants?: {
+    variantId?: string;
+    sku: string;
+    weightGrams: number;
+    pricePaise: number;
+    mrpPaise: number;
+    isActive: boolean;
+  }[];
+
+  isFeatured?: boolean;
+
+  seo?: {
+    title?: string;
+    description?: string;
+  };
+
+  removeImagePublicIds?: string[];
+}
+
 export const updateProduct = async (
   id: string,
-  data: {
-    name?: string;
-    description?: string;
-    shortDescription?: string;
-    category?: string;
-    variants?: {
-      sku: string;
-      weightGrams: number;
-      pricePaise: number;
-      mrpPaise: number;
-      stock: number;
-      isActive: boolean;
-    }[];
-    isFeatured?: boolean;
-    seo?: {
-      title?: string;
-      description?: string;
-    };
-    removeImagePublicIds?: string[];
-  },
+  data: UpdateProductInput,
   uploadedImages: UploadedImage[]
 ) => {
   if (!mongoose.isValidObjectId(id)) {
@@ -337,10 +371,21 @@ export const updateProduct = async (
     throw notFound("Product not found");
   }
 
+  // ----------------------------------------------
+  // CATEGORY
+  // ----------------------------------------------
+
   if (data.category !== undefined) {
     await validateCategory(data.category);
-    product.category = new mongoose.Types.ObjectId(data.category);
+
+    product.category = new mongoose.Types.ObjectId(
+      data.category
+    );
   }
+
+  // ----------------------------------------------
+  // BASIC PRODUCT DETAILS
+  // ----------------------------------------------
 
   if (data.name !== undefined) {
     product.name = data.name;
@@ -367,43 +412,148 @@ export const updateProduct = async (
     };
   }
 
+  // ----------------------------------------------
+  // VARIANT UPDATES
+  // ----------------------------------------------
+
   if (data.variants !== undefined) {
-    const existingIdsBySku = new Map(
+    const existingVariantsById = new Map(
       product.variants.map((variant) => [
-        variant.sku,
-        variant._id,
+        variant._id.toString(),
+        variant,
       ])
     );
 
-    product.variants = data.variants.map((variant) => ({
-      ...variant,
-      ...(existingIdsBySku.has(variant.sku)
-        ? { _id: existingIdsBySku.get(variant.sku) }
-        : {}),
-    })) as typeof product.variants;
+    const existingVariantsBySku = new Map(
+      product.variants.map((variant) => [
+        variant.sku,
+        variant,
+      ])
+    );
+
+    const usedVariantIds = new Set<string>();
+    const usedSkus = new Set<string>();
+
+    const updatedVariants = data.variants.map((variant) => {
+      if (usedSkus.has(variant.sku)) {
+        throw badRequest(
+          "Duplicate SKU in product variants"
+        );
+      }
+
+      usedSkus.add(variant.sku);
+
+      let existingVariant;
+
+      // Prefer variantId when editing an existing variant.
+      if (variant.variantId !== undefined) {
+        if (!mongoose.isValidObjectId(variant.variantId)) {
+          throw badRequest("Invalid variant ID");
+        }
+
+        existingVariant = existingVariantsById.get(
+          variant.variantId
+        );
+
+        if (!existingVariant) {
+          throw badRequest(
+            "Variant does not belong to this product"
+          );
+        }
+      } else {
+        // Fallback when the SKU has not changed.
+        existingVariant = existingVariantsBySku.get(
+          variant.sku
+        );
+      }
+
+      if (existingVariant) {
+        const existingId = existingVariant._id.toString();
+
+        if (usedVariantIds.has(existingId)) {
+          throw badRequest(
+            "Duplicate variant reference"
+          );
+        }
+
+        usedVariantIds.add(existingId);
+
+        return {
+          _id: existingVariant._id,
+
+          sku: variant.sku,
+          weightGrams: variant.weightGrams,
+          pricePaise: variant.pricePaise,
+          mrpPaise: variant.mrpPaise,
+          isActive: variant.isActive,
+
+          // CRITICAL:
+          // Preserve inventory from MongoDB.
+          // Never accept inventory from product update input.
+
+          stockOnHand: existingVariant.stockOnHand ?? 0,
+          reservedStock: existingVariant.reservedStock ?? 0,
+        };
+      }
+
+      // New variants always start with zero inventory.
+      return {
+        sku: variant.sku,
+        weightGrams: variant.weightGrams,
+        pricePaise: variant.pricePaise,
+        mrpPaise: variant.mrpPaise,
+        isActive: variant.isActive,
+
+        stockOnHand: 0,
+        reservedStock: 0,
+      };
+    });
+
+    // --------------------------------------------
+    // PREVENT REMOVING EXISTING VARIANTS
+    // --------------------------------------------
+
+    const removedVariants = product.variants.filter(
+      (variant) =>
+        !usedVariantIds.has(variant._id.toString())
+    );
+
+    if (removedVariants.length > 0) {
+      throw conflict(
+        "Existing variants cannot be removed. Deactivate variants instead to preserve cart and order references."
+      );
+    }
+
+    product.set("variants", updatedVariants);
   }
+
+  // ----------------------------------------------
+  // IMAGE REMOVAL VALIDATION
+  // ----------------------------------------------
 
   const requestedRemoveIds = new Set(
-  data.removeImagePublicIds ?? []
-);
+    data.removeImagePublicIds ?? []
+  );
 
-const existingPublicIds = new Set(
-  product.images.map((image) => image.publicId)
-);
+  const existingPublicIds = new Set(
+    product.images.map((image) => image.publicId)
+  );
 
-for (const publicId of requestedRemoveIds) {
-  if (!existingPublicIds.has(publicId)) {
-    throw badRequest(
-      "One or more image IDs do not belong to this product"
-    );
+  for (const publicId of requestedRemoveIds) {
+    if (!existingPublicIds.has(publicId)) {
+      throw badRequest(
+        "One or more image IDs do not belong to this product"
+      );
+    }
   }
-}
-
-const removeIds = requestedRemoveIds;
 
   const existingImages = product.images.filter(
-    (image) => !removeIds.has(image.publicId)
+    (image) => !requestedRemoveIds.has(image.publicId)
   );
+
+  // ----------------------------------------------
+  // ADD NEW IMAGES
+  // ----------------------------------------------
 
   const newImages = uploadedImages.map((image) => ({
     ...image,
@@ -418,32 +568,45 @@ const removeIds = requestedRemoveIds;
   ];
 
   if (combinedImages.length > 8) {
-    throw badRequest("A product can have at most 8 images");
+    throw badRequest(
+      "A product can have at most 8 images"
+    );
   }
 
   if (
-    removeIds.size > 0 &&
+    requestedRemoveIds.size > 0 &&
     combinedImages.length === 0
   ) {
-    throw badRequest("A product must have at least one image");
+    throw badRequest(
+      "A product must have at least one image"
+    );
   }
 
-  // Ensure exactly one primary image when images exist.
+  // ----------------------------------------------
+  // ENSURE EXACTLY ONE PRIMARY IMAGE
+  // ----------------------------------------------
+
   if (combinedImages.length > 0) {
-    const hasPrimary = combinedImages.some(
+    const existingPrimaryIndex = combinedImages.findIndex(
       (image) => image.isPrimary
     );
 
-    if (!hasPrimary) {
-      combinedImages[0].isPrimary = true;
-    }
+    const primaryIndex =
+      existingPrimaryIndex >= 0
+        ? existingPrimaryIndex
+        : 0;
+
+    combinedImages.forEach((image, index) => {
+      image.isPrimary = index === primaryIndex;
+      image.sortOrder = index;
+    });
   }
 
-  combinedImages.forEach((image, index) => {
-    image.sortOrder = index;
-  });
+  product.set("images", combinedImages);
 
-  product.images = combinedImages as typeof product.images;
+  // ----------------------------------------------
+  // SAVE PRODUCT
+  // ----------------------------------------------
 
   try {
     await product.save();
@@ -461,11 +624,14 @@ const removeIds = requestedRemoveIds;
 
   return {
     product,
-    removedImagePublicIds: [...removeIds],
+    removedImagePublicIds: [...requestedRemoveIds],
   };
 };
 
-// Activate/deactivate product.
+// --------------------------------------------------
+// ACTIVATE / DEACTIVATE PRODUCT
+// --------------------------------------------------
+
 export const updateProductStatus = async (
   id: string,
   isActive: boolean
@@ -483,6 +649,11 @@ export const updateProductStatus = async (
     throw notFound("Product not found");
   }
 
+  // A product can only be activated under an active category.
+  if (isActive) {
+    await validateCategory(product.category.toString());
+  }
+
   product.isActive = isActive;
 
   await product.save();
@@ -492,10 +663,11 @@ export const updateProductStatus = async (
   return product;
 };
 
-// Soft-delete product.
-export const deleteProduct = async (
-  id: string
-) => {
+// --------------------------------------------------
+// SOFT DELETE PRODUCT
+// --------------------------------------------------
+
+export const deleteProduct = async (id: string) => {
   if (!mongoose.isValidObjectId(id)) {
     throw badRequest("Invalid product ID");
   }
@@ -519,23 +691,33 @@ export const deleteProduct = async (
   return product;
 };
 
+// --------------------------------------------------
+// PUBLIC PRODUCT TRANSFORMATION
+// --------------------------------------------------
+
 const toPublicProduct = (product: any) => ({
   ...product,
 
-  images: product.images.map((image: any) => ({
+  // Never expose Cloudinary public IDs.
+  images: (product.images ?? []).map((image: any) => ({
     url: image.url,
     alt: image.alt,
     isPrimary: image.isPrimary,
     sortOrder: image.sortOrder,
   })),
 
-  variants: product.variants
+  // Never expose SKU, exact inventory or reserved stock.
+  variants: (product.variants ?? [])
     .filter((variant: any) => variant.isActive)
     .map((variant: any) => ({
       _id: variant._id,
       weightGrams: variant.weightGrams,
       pricePaise: variant.pricePaise,
       mrpPaise: variant.mrpPaise,
-      isAvailable: variant.stock > 0,
+
+      isAvailable:
+        (variant.stockOnHand ?? 0) -
+          (variant.reservedStock ?? 0) >
+        0,
     })),
 });

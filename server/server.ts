@@ -23,6 +23,11 @@ import adminRoutes from "./modules/admins/admin.routes.js";
 import productRoutes from "./modules/products/product.routes.js";
 import categoryRoutes from "./modules/categories/category.routes.js";
 import cartRoutes from "./modules/cart/cart.routes.js";
+import orderRoutes from "./modules/orders/order.routes.js";
+import addressRoutes from "./modules/addresses/address.routes.js";
+import paymentRoutes from "./modules/payments/payment.routes.js";
+
+import { startOrderExpiryWorker } from "./modules/orders/order-expiry.worker.js";
 
 let server: Server | null = null;
 let isShuttingDown = false;
@@ -54,6 +59,12 @@ const startServer = async (): Promise<void> => {
 
     app.use("/api/cart", cartRoutes);
 
+    app.use("/api/orders", orderRoutes);
+
+    app.use("/api/addresses", addressRoutes);
+
+    app.use("/api/payments", paymentRoutes);
+
     app.get("/api/health", (_req, res) => {
       res.status(200).json({
         success: true,
@@ -61,6 +72,8 @@ const startServer = async (): Promise<void> => {
         timestamp: new Date().toISOString(),
       });
     });
+
+    startOrderExpiryWorker();
 
     // Future API routes will be registered here.
 

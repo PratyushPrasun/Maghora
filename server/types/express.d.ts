@@ -12,6 +12,7 @@ declare global {
   namespace Express {
     interface Request {
       currentUser?: IUser;
+      rawBody?: Buffer;
     }
   }
 }

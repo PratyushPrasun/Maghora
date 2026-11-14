@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "seed:admin": "tsx scripts/createAdmin.ts"
+    "seed:admin": "tsx scripts/createAdmin.ts",
+    "migrate:inventory": "tsx scripts/migrateInventory.ts"
   },
   "dependencies": {
     "@sentry/node": "^11.11.0",

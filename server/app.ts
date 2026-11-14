@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import type { Request } from "express";
 
 import { sessionMiddleware } from "./config/session.js";
 import { env } from "./config/env.js";
@@ -23,7 +24,19 @@ app.use(
   })
 );
 
-app.use(express.json({ limit: "10kb" }));
+app.use(express.json({
+    verify: (req, _res, buffer) => {
+      const request = req as Request & {
+        rawBody?: Buffer;
+      };
+
+      const pathname = req.originalUrl.split("?")[0];
+
+      if (pathname === "/api/payments/webhook") {
+        request.rawBody = Buffer.from(buffer);
+      }
+    },
+  }));
 
 app.use(
   express.urlencoded({
