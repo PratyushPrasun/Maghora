@@ -71,7 +71,7 @@ export async function getCart(userId: string) {
       !product.isDeleted &&
       variant &&
       variant.isActive &&
-      variant.stock >= cartItem.quantity
+      variant.stockOnHand - variant.reservedStock >= cartItem.quantity
     );
 
     if (!available) {
@@ -101,7 +101,9 @@ export async function getCart(userId: string) {
 
       quantity: cartItem.quantity,
       available,
-      currentStock: variant?.stock ?? 0,
+      currentStock: variant
+  ? variant.stockOnHand - variant.reservedStock
+  : 0,
       lineTotalPaise,
     };
   });
@@ -126,9 +128,9 @@ export async function addCartItem(
     data.variantId
   );
 
-  if (data.quantity > variant.stock) {
+  if (data.quantity > variant.stockOnHand - variant.reservedStock) {
     throw createError(
-      `Only ${variant.stock} units are currently available`,
+      `Only ${variant.stockOnHand - variant.reservedStock} units are currently available`,
       409
     );
   }
@@ -141,9 +143,9 @@ export async function addCartItem(
   if (existing) {
     const newQuantity = existing.quantity + data.quantity;
 
-    if (newQuantity > variant.stock || newQuantity > 20) {
+    if (newQuantity > variant.stockOnHand - variant.reservedStock || newQuantity > 20) {
       throw createError(
-        `Maximum available quantity is ${Math.min(variant.stock, 20)}`,
+        `Maximum available quantity is ${Math.min(variant.stockOnHand - variant.reservedStock, 20)}`,
         409
       );
     }
@@ -197,9 +199,9 @@ export async function updateCartItem(
     cartItem.variantId.toString()
   );
 
-  if (quantity > variant.stock) {
+  if (quantity > variant.stockOnHand - variant.reservedStock) {
     throw createError(
-      `Only ${variant.stock} units are currently available`,
+      `Only ${variant.stockOnHand - variant.reservedStock} units are currently available`,
       409
     );
   }

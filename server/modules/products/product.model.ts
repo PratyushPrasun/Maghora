@@ -18,7 +18,8 @@ export interface IProductVariant {
   weightGrams: number;
   pricePaise: number;
   mrpPaise: number;
-  stock: number;
+  stockOnHand: number;
+  reservedStock: number;
   isActive: boolean;
 }
 
@@ -102,16 +103,23 @@ const variantSchema = new Schema<IProductVariant>(
       min: 1,
     },
 
-    stock: {
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    
+    stockOnHand: {
       type: Number,
       required: true,
       min: 0,
       default: 0,
     },
 
-    isActive: {
-      type: Boolean,
-      default: true,
+    reservedStock: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 0,
     },
   },
   {
