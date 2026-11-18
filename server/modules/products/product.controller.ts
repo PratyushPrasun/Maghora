@@ -4,6 +4,7 @@ import {
   createProduct as createProductService,
   listProducts as listProductsService,
   getProductBySlug as getProductBySlugService,
+  getAdminProductById as getAdminProductByIdService,
   updateProduct as updateProductService,
   updateProductStatus as updateProductStatusService,
   deleteProduct as deleteProductService,
@@ -102,6 +103,28 @@ export const getAdminProducts = async (
   return res.status(200).json({
     success: true,
     data: result,
+  });
+};
+
+// Admin single product details (including inactive).
+export const getAdminProductById = async (
+  req: Request,
+  res: Response
+) => {
+  const id = req.params.id;
+
+  if (typeof id !== "string") {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid product ID",
+    });
+  }
+
+  const product = await getAdminProductByIdService(id);
+
+  return res.status(200).json({
+    success: true,
+    data: { product },
   });
 };
 

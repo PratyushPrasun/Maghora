@@ -29,6 +29,37 @@ const variantSchema = z.object({
   }
 );
 
+const updateVariantSchema = z.object({
+  variantId: z.string().optional(),
+
+  sku: z
+    .string()
+    .trim()
+    .min(2)
+    .max(40)
+    .regex(
+      /^[A-Za-z0-9_-]+$/,
+      "SKU can contain only letters, numbers, hyphens and underscores"
+    )
+    .transform((value) => value.toUpperCase()),
+
+  weightGrams: z.number().int().positive(),
+
+  pricePaise: z.number().int().positive(),
+
+  mrpPaise: z.number().int().positive(),
+
+  stockOnHand: z.number().int().min(0).optional(),
+
+  isActive: z.boolean().default(true),
+}).refine(
+  (variant) => variant.mrpPaise >= variant.pricePaise,
+  {
+    message: "MRP cannot be lower than selling price",
+    path: ["mrpPaise"],
+  }
+);
+
 const variantsSchema = z
   .array(variantSchema)
   .min(1)
@@ -81,7 +112,19 @@ export const updateProductSchema = z.object({
     "Invalid category ID"
   ).optional(),
 
-  variants: variantsSchema.optional(),
+  variants: z
+    .array(updateVariantSchema)
+    .min(1)
+    .max(20)
+    .refine(
+      (variants) =>
+        new Set(variants.map((variant) => variant.sku)).size ===
+        variants.length,
+      {
+        message: "Variant SKUs must be unique within a product",
+      }
+    )
+    .optional(),
 
   isFeatured: z.boolean().optional(),
 

@@ -25,6 +25,15 @@ const router = Router();
 // Public category listing.
 router.get("/", getCategories);
 
+// Admin-only: must come BEFORE the /:slug param route,
+// otherwise Express matches "manage" as a slug.
+router.get(
+  "/manage",
+  authenticate,
+  authorize("admin", "super_admin"),
+  getAdminCategories
+);
+
 // Public category details.
 router.get("/:slug", getCategoryBySlug);
 
@@ -35,6 +44,14 @@ router.post(
   authorize("admin", "super_admin"),
   validate(createCategorySchema),
   createCategory
+);
+
+router.patch(
+  "/:id/status",
+  authenticate,
+  authorize("admin", "super_admin"),
+  validate(updateCategoryStatusSchema),
+  updateCategoryStatus
 );
 
 router.patch(
@@ -50,20 +67,5 @@ router.delete(
   authenticate,
   authorize("admin", "super_admin"),
   deleteCategory
-);
-
-router.get(
-  "/manage",
-  authenticate,
-  authorize("admin", "super_admin"),
-  getAdminCategories
-);
-
-router.patch(
-  "/:id/status",
-  authenticate,
-  authorize("admin", "super_admin"),
-  validate(updateCategoryStatusSchema),
-  updateCategoryStatus
 );
 export default router;

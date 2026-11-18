@@ -87,7 +87,7 @@ export interface CreateProductInput {
     weightGrams: number;
     pricePaise: number;
     mrpPaise: number;
-    stockOnHand: number;
+    stock: number;
     isActive: boolean;
   }[];
 
@@ -130,7 +130,7 @@ export const createProduct = async (
         isActive: variant.isActive,
 
         // Initial physical inventory.
-        stockOnHand: variant.stockOnHand ?? 0,
+        stockOnHand: variant.stock ?? 0,
 
         // Reserved stock is never supplied during product creation.
         reservedStock: 0,
@@ -260,11 +260,13 @@ export const listProducts = async (
 
     const skip = (options.page - 1) * options.limit;
 
+    const selectFields = includeInactive
+      ? "name slug shortDescription category images variants isActive isFeatured seo description createdAt"
+      : "name slug shortDescription category images variants isFeatured createdAt";
+
     const [products, total] = await Promise.all([
       Product.find(filter)
-        .select(
-          "name slug shortDescription category images variants isFeatured createdAt"
-        )
+        .select(selectFields)
         .populate("category", "name slug")
         .sort(sortMap[options.sort])
         .skip(skip)
@@ -275,7 +277,9 @@ export const listProducts = async (
     ]);
 
     return {
-      products: products.map(toPublicProduct),
+      products: includeInactive
+        ? products
+        : products.map(toPublicProduct),
 
       pagination: {
         total,
@@ -325,6 +329,29 @@ export const getProductBySlug = async (slug: string) => {
 };
 
 // --------------------------------------------------
+// GET ADMIN PRODUCT BY ID
+// --------------------------------------------------
+
+export const getAdminProductById = async (id: string) => {
+  if (!mongoose.isValidObjectId(id)) {
+    throw badRequest("Invalid product ID");
+  }
+
+  const product = await Product.findOne({
+    _id: id,
+    isDeleted: false,
+  })
+    .populate("category", "name slug")
+    .lean();
+
+  if (!product) {
+    throw notFound("Product not found");
+  }
+
+  return product;
+};
+
+// --------------------------------------------------
 // UPDATE PRODUCT
 // --------------------------------------------------
 
@@ -340,6 +367,7 @@ export interface UpdateProductInput {
     weightGrams: number;
     pricePaise: number;
     mrpPaise: number;
+    stockOnHand?: number;
     isActive: boolean;
   }[];
 
@@ -419,7 +447,7 @@ export const updateProduct = async (
   if (data.variants !== undefined) {
     const existingVariantsById = new Map(
       product.variants.map((variant) => [
-        variant._id.toString(),
+        String(variant._id),
         variant,
       ])
     );
@@ -468,7 +496,7 @@ export const updateProduct = async (
       }
 
       if (existingVariant) {
-        const existingId = existingVariant._id.toString();
+        const existingId = String(existingVariant._id);
 
         if (usedVariantIds.has(existingId)) {
           throw badRequest(
@@ -487,16 +515,14 @@ export const updateProduct = async (
           mrpPaise: variant.mrpPaise,
           isActive: variant.isActive,
 
-          // CRITICAL:
-          // Preserve inventory from MongoDB.
-          // Never accept inventory from product update input.
-
-          stockOnHand: existingVariant.stockOnHand ?? 0,
+          // Use admin-supplied stockOnHand when provided;
+          // otherwise preserve current inventory from MongoDB.
+          stockOnHand: variant.stockOnHand ?? existingVariant.stockOnHand ?? 0,
           reservedStock: existingVariant.reservedStock ?? 0,
         };
       }
 
-      // New variants always start with zero inventory.
+      // New variants use admin-supplied stock or default to zero.
       return {
         sku: variant.sku,
         weightGrams: variant.weightGrams,
@@ -504,7 +530,7 @@ export const updateProduct = async (
         mrpPaise: variant.mrpPaise,
         isActive: variant.isActive,
 
-        stockOnHand: 0,
+        stockOnHand: variant.stockOnHand ?? 0,
         reservedStock: 0,
       };
     });
@@ -515,7 +541,7 @@ export const updateProduct = async (
 
     const removedVariants = product.variants.filter(
       (variant) =>
-        !usedVariantIds.has(variant._id.toString())
+        !usedVariantIds.has(String(variant._id))
     );
 
     if (removedVariants.length > 0) {

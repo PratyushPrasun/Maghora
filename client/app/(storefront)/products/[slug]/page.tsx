@@ -13,8 +13,6 @@ import {
   ChevronRight,
   Plus,
   Minus,
-  Check,
-  Star,
   Share2,
 } from "lucide-react";
 import { useProduct, useProducts } from "@/hooks/useProducts";
@@ -171,17 +169,6 @@ export default function ProductDetailPage() {
               <h1 className="text-3xl sm:text-4xl font-bold font-serif text-foreground">
                 {product.name}
               </h1>
-
-              {/* Review badge */}
-              <div className="mt-3 flex items-center gap-3">
-                <div className="flex text-amber-500">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-current" />
-                  ))}
-                </div>
-                <span className="text-xs font-semibold text-foreground">4.9 / 5</span>
-                <span className="text-xs text-muted-foreground">• 128 Verified Ratings</span>
-              </div>
             </div>
 
             {/* Pricing */}
@@ -261,7 +248,7 @@ export default function ProductDetailPage() {
                   size="lg"
                   onClick={handleAddToCart}
                   disabled={!isAvailable || isAddingItem}
-                  className="flex-1 rounded-xl gap-2 font-bold shadow-md h-12"
+                  className="h-12 min-w-0 flex-1 gap-1 rounded-xl px-3 text-xs font-bold shadow-md sm:gap-2 sm:text-sm"
                 >
                   <ShoppingBag className="h-5 w-5" />
                   {isAvailable ? `Add to Basket • ${formatPrice(pricePaise * quantity)}` : "Out of Stock"}
@@ -276,22 +263,18 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Quality Checkpoints */}
-            <div className="pt-6 border-t border-border/80 grid grid-cols-2 gap-4 text-xs text-muted-foreground">
+              <div className="grid grid-cols-1 gap-3 border-t border-border/80 pt-6 text-xs text-muted-foreground sm:grid-cols-3">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-primary" />
-                <span>Slow Roasted in Olive Oil</span>
+                  <span>Roasted in olive oil</span>
               </div>
               <div className="flex items-center gap-2">
                 <Flame className="h-4 w-4 text-accent" />
-                <span>Rich in Protein & Fiber</span>
+                  <span>Handcrafted spice blends</span>
               </div>
               <div className="flex items-center gap-2">
                 <Heart className="h-4 w-4 text-primary" />
-                <span>Zero Cholesterol & Palm Oil</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-primary" />
-                <span>100% Vegetarian & Gluten Free</span>
+                  <span>Mithila inspired</span>
               </div>
             </div>
           </div>

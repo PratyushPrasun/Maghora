@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Plus, Trash2, UploadCloud, X } from "lucide-react";
-import { useAdminProducts, useUpdateProduct } from "@/hooks/useProducts";
+import { ArrowLeft, Plus, Minus, Trash2, UploadCloud, X } from "lucide-react";
+import { useAdminProduct, useUpdateProduct } from "@/hooks/useProducts";
 import { useAdminCategories } from "@/hooks/useCategories";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,22 +16,28 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
-const variantSchema = z.object({
-  variantId: z.string().optional(),
-  sku: z.string().trim().min(2, "SKU required").max(40),
-  weightGrams: z.number().int().positive(),
-  pricePaise: z.number().int().positive(),
-  mrpPaise: z.number().int().positive(),
-  isActive: z.boolean(),
-});
+const variantSchema = z
+  .object({
+    variantId: z.string().optional(),
+    sku: z.string().trim().min(2, "SKU required").max(40),
+    weightGrams: z.number().int().positive("Weight must be greater than 0"),
+    price: z.number().positive("Selling price (₹) must be greater than 0"),
+    mrp: z.number().positive("MRP (₹) must be greater than 0"),
+    stockOnHand: z.number().int().min(0, "Stock cannot be negative"),
+    isActive: z.boolean(),
+  })
+  .refine((v) => v.mrp >= v.price, {
+    message: "MRP cannot be lower than selling price",
+    path: ["mrp"],
+  });
 
 const updateProductSchema = z.object({
-  name: z.string().trim().min(2).max(120),
+  name: z.string().trim().min(2, "Name must be at least 2 characters").max(120),
   category: z.string().regex(/^[0-9a-fA-F]{24}$/, "Please select a category"),
   shortDescription: z.string().trim().max(250).optional(),
-  description: z.string().trim().min(10).max(5000),
+  description: z.string().trim().min(10, "Description must be at least 10 characters").max(5000),
   isFeatured: z.boolean(),
-  variants: z.array(variantSchema).min(1),
+  variants: z.array(variantSchema).min(1, "At least one variant required"),
   seoTitle: z.string().max(70).optional(),
   seoDescription: z.string().max(170).optional(),
 });
@@ -42,12 +48,11 @@ export default function EditProductPage() {
   const params = useParams();
   const productId = (params?.id as string) || "";
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: productsData, isLoading: loadingProducts } = useAdminProducts({ limit: 50 });
+  const { data: currentProduct, isLoading: loadingProduct } = useAdminProduct(productId);
   const { data: categories } = useAdminCategories();
   const updateProductMutation = useUpdateProduct();
-
-  const currentProduct = productsData?.products?.find((p) => p._id === productId);
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [filePreviews, setFilePreviews] = useState<string[]>([]);
@@ -58,6 +63,8 @@ export default function EditProductPage() {
     control,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(updateProductSchema),
@@ -70,7 +77,7 @@ export default function EditProductPage() {
     },
   });
 
-  const { fields, append } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control,
     name: "variants",
   });
@@ -89,46 +96,59 @@ export default function EditProductPage() {
         isFeatured: currentProduct.isFeatured || false,
         seoTitle: currentProduct.seo?.title || "",
         seoDescription: currentProduct.seo?.description || "",
-        variants: currentProduct.variants?.map((v) => ({
-          variantId: v._id,
-          sku: v.sku || "SKU-STD",
-          weightGrams: v.weightGrams,
-          pricePaise: v.pricePaise,
-          mrpPaise: v.mrpPaise,
-          isActive: v.isActive !== false,
-        })) || [],
+        variants:
+          currentProduct.variants?.map((v) => ({
+            variantId: v._id,
+            sku: v.sku || "SKU-STD",
+            weightGrams: v.weightGrams,
+            // Convert paise to rupees for UI
+            price: Number(((v.pricePaise ?? 0) / 100).toFixed(2)),
+            mrp: Number(((v.mrpPaise ?? 0) / 100).toFixed(2)),
+            stockOnHand: v.stockOnHand ?? 0,
+            isActive: v.isActive !== false,
+          })) || [],
       });
     }
   }, [currentProduct, reset]);
 
-  if (loadingProducts) {
-    return (
-      <div className="max-w-4xl mx-auto py-12">
-        <Skeleton className="h-96 w-full rounded-3xl" />
-      </div>
-    );
-  }
-
-  if (!currentProduct) {
-    return (
-      <div className="max-w-md mx-auto py-20 text-center space-y-4">
-        <h2 className="text-xl font-bold font-serif text-foreground">Product Not Found</h2>
-        <p className="text-sm text-muted-foreground">
-          The requested product ID does not exist in the catalogue.
-        </p>
-        <Link href="/admin/products">
-          <Button>Back to Products</Button>
-        </Link>
-      </div>
-    );
-  }
+  const updateStock = (index: number, delta: number) => {
+    const current = Number(watch(`variants.${index}.stockOnHand`)) || 0;
+    const nextVal = Math.max(0, current + delta);
+    setValue(`variants.${index}.stockOnHand`, nextVal, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     const files = Array.from(e.target.files);
-    setSelectedFiles([...selectedFiles, ...files]);
-    const previews = files.map((file) => URL.createObjectURL(file));
-    setFilePreviews([...filePreviews, ...previews]);
+
+    const currentTotalImages =
+      (currentProduct?.images?.length || 0) -
+      removePublicIds.length +
+      selectedFiles.length;
+
+    if (currentTotalImages + files.length > 8) {
+      toast.error("A product can have a maximum of 8 images.");
+      return;
+    }
+
+    const newFiles = [...selectedFiles, ...files];
+    setSelectedFiles(newFiles);
+    const previews = newFiles.map((file) => URL.createObjectURL(file));
+    setFilePreviews(previews);
+
+    // Reset input value so same files can be re-selected if removed
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const removePendingFile = (index: number) => {
+    const updatedFiles = selectedFiles.filter((_, i) => i !== index);
+    setSelectedFiles(updatedFiles);
+    setFilePreviews(updatedFiles.map((file) => URL.createObjectURL(file)));
   };
 
   const toggleRemoveExistingImage = (publicId: string) => {
@@ -143,14 +163,16 @@ export default function EditProductPage() {
         name: data.name,
         category: data.category,
         description: data.description,
-        shortDescription: data.shortDescription,
+        shortDescription: data.shortDescription || "",
         isFeatured: data.isFeatured,
         variants: data.variants.map((v) => ({
           ...(v.variantId ? { variantId: v.variantId } : {}),
           sku: v.sku.toUpperCase(),
           weightGrams: Number(v.weightGrams),
-          pricePaise: Number(v.pricePaise),
-          mrpPaise: Number(v.mrpPaise),
+          // Convert rupees back to paise for backend
+          pricePaise: Math.round(Number(v.price) * 100),
+          mrpPaise: Math.round(Number(v.mrp) * 100),
+          stockOnHand: Number(v.stockOnHand),
           isActive: v.isActive,
         })),
         seo: {
@@ -177,12 +199,36 @@ export default function EditProductPage() {
 
       router.push("/admin/products");
     } catch {
-      // Handled in hook
+      // Handled in mutation hook
     }
   };
 
+  if (loadingProduct) {
+    return (
+      <div className="max-w-4xl mx-auto py-12 space-y-4">
+        <Skeleton className="h-10 w-48 rounded-xl" />
+        <Skeleton className="h-96 w-full rounded-3xl" />
+      </div>
+    );
+  }
+
+  if (!currentProduct) {
+    return (
+      <div className="max-w-md mx-auto py-20 text-center space-y-4">
+        <h2 className="text-xl font-bold font-serif text-foreground">Product Not Found</h2>
+        <p className="text-sm text-muted-foreground">
+          The requested product ID does not exist in the catalogue.
+        </p>
+        <Link href="/admin/products">
+          <Button>Back to Products</Button>
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-8 pb-16">
+      {/* Header */}
       <div>
         <Link
           href="/admin/products"
@@ -194,7 +240,7 @@ export default function EditProductPage() {
           Edit Product: {currentProduct.name}
         </h1>
         <p className="text-xs text-muted-foreground mt-1">
-          Update catalogue content, manage existing Cloudinary images, and refine variants
+          Update catalogue content, manage product images, and edit pricing & inventory in Rupees (₹)
         </p>
       </div>
 
@@ -223,6 +269,9 @@ export default function EditProductPage() {
                   </option>
                 ))}
               </select>
+              {errors.category && (
+                <p className="text-xs text-destructive">{errors.category.message}</p>
+              )}
             </div>
 
             <div className="space-y-1.5">
@@ -242,7 +291,10 @@ export default function EditProductPage() {
 
             <div className="space-y-1.5 sm:col-span-2">
               <Label className="text-xs font-semibold">Short Catchline</Label>
-              <Input {...register("shortDescription")} />
+              <Input
+                {...register("shortDescription")}
+                placeholder="e.g. Slow-roasted in olive oil with fiery African bird's eye chili."
+              />
             </div>
 
             <div className="space-y-1.5 sm:col-span-2">
@@ -252,15 +304,15 @@ export default function EditProductPage() {
           </div>
         </div>
 
-        {/* Variants */}
+        {/* Variants, Pricing (Rupees) & Quantity */}
         <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-xs space-y-5">
           <div className="flex items-center justify-between pb-3 border-b border-border/60">
             <div>
               <h2 className="text-base font-bold text-foreground">
-                Variants & Pricing
+                Variants, Pricing & Inventory
               </h2>
-              <p className="text-xs text-muted-foreground">
-                Inventory is preserved for existing variants. Price is in Paise.
+              <p className="text-xs text-muted-foreground mt-0.5">
+                All prices are entered in Rupees (₹). Adjust stock units using the +/- buttons or enter directly.
               </p>
             </div>
 
@@ -270,10 +322,11 @@ export default function EditProductPage() {
               size="sm"
               onClick={() =>
                 append({
-                  sku: `NEW-${Date.now().toString().slice(-4)}`,
+                  sku: `MG-${Date.now().toString().slice(-4)}`,
                   weightGrams: 100,
-                  pricePaise: 24900,
-                  mrpPaise: 29900,
+                  price: 249,
+                  mrp: 299,
+                  stockOnHand: 50,
                   isActive: true,
                 })
               }
@@ -284,76 +337,165 @@ export default function EditProductPage() {
           </div>
 
           <div className="space-y-4">
-            {fields.map((field, index) => (
-              <div
-                key={field.id}
-                className="p-4 rounded-2xl border border-border/80 bg-background space-y-3"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-primary">
-                    Variant #{index + 1} {field.variantId ? "(Existing)" : "(New)"}
-                  </span>
-                  <label className="flex items-center gap-1.5 text-xs text-foreground cursor-pointer">
-                    <input
-                      type="checkbox"
-                      {...register(`variants.${index}.isActive` as const)}
-                      className="h-3.5 w-3.5 text-primary rounded"
-                    />
-                    <span>Active</span>
-                  </label>
+            {fields.map((field, index) => {
+              const isExisting = Boolean(field.variantId);
+              return (
+                <div
+                  key={field.id}
+                  className="p-4 rounded-2xl border border-border/80 bg-background space-y-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-primary">
+                      Variant #{index + 1} {isExisting ? "(Existing)" : "(New)"}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <label className="flex items-center gap-1.5 text-xs text-foreground cursor-pointer">
+                        <input
+                          type="checkbox"
+                          {...register(`variants.${index}.isActive` as const)}
+                          className="h-3.5 w-3.5 text-primary rounded"
+                        />
+                        <span>Active</span>
+                      </label>
+
+                      {!isExisting && fields.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => remove(index)}
+                          className="text-muted-foreground hover:text-destructive p-1 transition-colors"
+                          title="Remove new variant"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-[11px]">SKU *</Label>
+                      <Input
+                        {...register(`variants.${index}.sku` as const)}
+                        className="uppercase font-mono text-xs h-9"
+                        placeholder="MG-100G"
+                      />
+                      {errors.variants?.[index]?.sku && (
+                        <p className="text-[10px] text-destructive">
+                          {errors.variants[index]?.sku?.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-[11px]">Weight (grams) *</Label>
+                      <Input
+                        type="number"
+                        {...register(`variants.${index}.weightGrams` as const, {
+                          valueAsNumber: true,
+                        })}
+                        className="text-xs h-9"
+                        placeholder="100"
+                      />
+                      {errors.variants?.[index]?.weightGrams && (
+                        <p className="text-[10px] text-destructive">
+                          {errors.variants[index]?.weightGrams?.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-[11px]">Price (₹) *</Label>
+                      <Input
+                        type="number"
+                        step="any"
+                        placeholder="249"
+                        {...register(`variants.${index}.price` as const, {
+                          valueAsNumber: true,
+                        })}
+                        className="text-xs h-9 font-medium"
+                      />
+                      {errors.variants?.[index]?.price && (
+                        <p className="text-[10px] text-destructive">
+                          {errors.variants[index]?.price?.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-[11px]">MRP (₹) *</Label>
+                      <Input
+                        type="number"
+                        step="any"
+                        placeholder="299"
+                        {...register(`variants.${index}.mrp` as const, {
+                          valueAsNumber: true,
+                        })}
+                        className="text-xs h-9 font-medium"
+                      />
+                      {errors.variants?.[index]?.mrp && (
+                        <p className="text-[10px] text-destructive">
+                          {errors.variants[index]?.mrp?.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Quantity with +/- Controls */}
+                    <div className="space-y-1 col-span-2 sm:col-span-1">
+                      <Label className="text-[11px]">Stock Quantity *</Label>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => updateStock(index, -1)}
+                          className="h-9 w-9 flex items-center justify-center rounded-lg border border-border bg-muted hover:bg-muted/80 text-foreground transition-colors shrink-0"
+                          title="Decrease stock"
+                        >
+                          <Minus className="h-3.5 w-3.5" />
+                        </button>
+                        <Input
+                          type="number"
+                          min={0}
+                          {...register(`variants.${index}.stockOnHand` as const, {
+                            valueAsNumber: true,
+                          })}
+                          className="text-xs h-9 text-center font-bold flex-1"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => updateStock(index, 1)}
+                          className="h-9 w-9 flex items-center justify-center rounded-lg border border-border bg-muted hover:bg-muted/80 text-foreground transition-colors shrink-0"
+                          title="Increase stock"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      {errors.variants?.[index]?.stockOnHand && (
+                        <p className="text-[10px] text-destructive">
+                          {errors.variants[index]?.stockOnHand?.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div className="space-y-1">
-                    <Label className="text-[11px]">SKU *</Label>
-                    <Input
-                      {...register(`variants.${index}.sku` as const)}
-                      className="uppercase font-mono text-xs h-9"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <Label className="text-[11px]">Weight (g) *</Label>
-                    <Input
-                      type="number"
-                      {...register(`variants.${index}.weightGrams` as const, { valueAsNumber: true })}
-                      className="text-xs h-9"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <Label className="text-[11px]">Price (Paise) *</Label>
-                    <Input
-                      type="number"
-                      {...register(`variants.${index}.pricePaise` as const, { valueAsNumber: true })}
-                      className="text-xs h-9"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <Label className="text-[11px]">MRP (Paise) *</Label>
-                    <Input
-                      type="number"
-                      {...register(`variants.${index}.mrpPaise` as const, { valueAsNumber: true })}
-                      className="text-xs h-9"
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
-        {/* Cloudinary Image Management */}
-        <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-xs space-y-4">
-          <h2 className="text-base font-bold text-foreground pb-3 border-b border-border/60">
-            Image Management
-          </h2>
+        {/* Product Photography & Cloudinary Management */}
+        <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-xs space-y-5">
+          <div className="pb-3 border-b border-border/60">
+            <h2 className="text-base font-bold text-foreground">
+              Product Images
+            </h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Add new images from your computer or manage existing Cloudinary images
+            </p>
+          </div>
 
           {/* Existing images */}
           {currentProduct.images && currentProduct.images.length > 0 && (
             <div className="space-y-2">
-              <Label className="text-xs font-semibold">Existing Cloudinary Images:</Label>
+              <Label className="text-xs font-semibold">Existing Images:</Label>
               <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
                 {currentProduct.images.map((img, idx) => {
                   const isMarked = img.publicId && removePublicIds.includes(img.publicId);
@@ -364,16 +506,22 @@ export default function EditProductPage() {
                         isMarked ? "border-destructive opacity-40 grayscale" : "border-border"
                       }`}
                     >
-                      <img src={img.url} alt="Product image" className="w-full h-full object-cover" />
+                      <img
+                        src={img.url}
+                        alt={img.alt || "Product image"}
+                        className="w-full h-full object-cover"
+                      />
                       {img.publicId && (
                         <button
                           type="button"
                           onClick={() => toggleRemoveExistingImage(img.publicId!)}
-                          className={`absolute bottom-1 right-1 px-2 py-0.5 rounded text-[10px] font-bold ${
-                            isMarked ? "bg-primary text-white" : "bg-destructive text-white"
+                          className={`absolute bottom-1 right-1 px-2 py-0.5 rounded text-[10px] font-bold shadow-xs ${
+                            isMarked
+                              ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                              : "bg-destructive text-destructive-foreground hover:bg-destructive/90"
                           }`}
                         >
-                          {isMarked ? "Keep" : "Remove"}
+                          {isMarked ? "Undo Remove" : "Remove"}
                         </button>
                       )}
                     </div>
@@ -383,16 +531,96 @@ export default function EditProductPage() {
             </div>
           )}
 
-          {/* Upload new images */}
-          <div className="pt-4 border-t border-border/60 space-y-2">
+          {/* Upload new images box */}
+          <div className="pt-2 space-y-3">
             <Label className="text-xs font-semibold">Upload Additional Images:</Label>
-            <input
-              type="file"
-              multiple
-              accept="image/jpeg,image/png,image/webp"
-              onChange={handleFileChange}
-              className="text-xs"
-            />
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="border-2 border-dashed border-border rounded-2xl p-6 text-center hover:bg-muted/30 transition-colors cursor-pointer"
+            >
+              <UploadCloud className="h-10 w-10 text-muted-foreground mx-auto mb-2" />
+              <p className="text-xs font-semibold text-foreground">
+                Click to select or drag and drop images
+              </p>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Supports JPG, PNG, WebP up to 5MB (Max 8 total images)
+              </p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleFileChange}
+                className="hidden"
+                id="editProductImageUpload"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-4 pointer-events-none"
+              >
+                Browse Files
+              </Button>
+            </div>
+
+            {/* New file previews */}
+            {filePreviews.length > 0 && (
+              <div className="space-y-1.5 pt-2">
+                <Label className="text-[11px] text-muted-foreground">New Images to Upload:</Label>
+                <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
+                  {filePreviews.map((preview, idx) => (
+                    <div
+                      key={idx}
+                      className="relative aspect-square rounded-xl border border-border bg-muted overflow-hidden"
+                    >
+                      <img
+                        src={preview}
+                        alt="Upload preview"
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removePendingFile(idx);
+                        }}
+                        className="absolute top-1 right-1 bg-black/70 text-white rounded-full p-1 hover:bg-destructive transition-colors"
+                        title="Remove image"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* SEO Meta Tags Card */}
+        <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-xs space-y-4">
+          <h2 className="text-base font-bold text-foreground pb-3 border-b border-border/60">
+            Search Engine Optimization (SEO)
+          </h2>
+
+          <div className="grid grid-cols-1 gap-4">
+            <div className="space-y-1">
+              <Label className="text-xs">Meta Title</Label>
+              <Input
+                {...register("seoTitle")}
+                placeholder="e.g. Peri Peri Flavoured Makhana | Maghora"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs">Meta Description</Label>
+              <Textarea
+                {...register("seoDescription")}
+                placeholder="Brief summary for Google search results (up to 160 characters)"
+                rows={2}
+              />
+            </div>
           </div>
         </div>
 
@@ -403,7 +631,12 @@ export default function EditProductPage() {
               Cancel
             </Button>
           </Link>
-          <Button type="submit" size="lg" isLoading={updateProductMutation.isPending} className="font-bold">
+          <Button
+            type="submit"
+            size="lg"
+            isLoading={updateProductMutation.isPending}
+            className="font-bold"
+          >
             Save Changes
           </Button>
         </div>

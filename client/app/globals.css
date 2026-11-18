@@ -1,50 +1,68 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
 @import "tailwindcss";
 
 :root {
-  --background: #FAF8F3;
-  --foreground: #222521;
-  
+  /* Core Design System Palette */
+  --cream: #F7F0E3;
+  --cream-soft: #FDFBF7;
+  --cream-dark: #ECE3D0;
+
+  --forest: #244C38;
+  --forest-dark: #1A3728;
+  --forest-light: #32644B;
+
+  --terracotta: #B85C38;
+  --terracotta-dark: #9A4928;
+  --terracotta-light: #CF7653;
+
+  --gold: #C49A50;
+  --gold-light: #DDB876;
+  --gold-dark: #A37B34;
+
+  --charcoal: #292820;
+  --charcoal-light: #444237;
+
+  --sage: #DCE5D7;
+  --sage-light: #EFF4EC;
+  --sage-dark: #BFCEB8;
+
+  /* Semantic Variables */
+  --background: #F7F0E3;
+  --foreground: #292820;
+
   --card: #FFFFFF;
-  --card-foreground: #222521;
-
+  --card-foreground: #292820;
   --popover: #FFFFFF;
-  --popover-foreground: #222521;
+  --popover-foreground: #292820;
 
-  /* Deep Earthy Green */
-  --primary: #1A3826;
-  --primary-foreground: #FAF8F3;
-  --primary-hover: #132A1C;
-  --primary-light: #2A563C;
+  --primary: #B85C38;
+  --primary-foreground: #FFFFFF;
+  --primary-hover: #9A4928;
+  --primary-light: #CF7653;
 
-  /* Warm Spiced Terracotta / Orange Accent */
-  --accent: #E26D2B;
+  --accent: #244C38;
   --accent-foreground: #FFFFFF;
-  --accent-hover: #C8591B;
-  --accent-light: #FDF1EA;
+  --accent-hover: #1A3728;
+  --accent-light: #DCE5D7;
 
-  /* Almond Cream Secondary */
-  --secondary: #EFE9DD;
-  --secondary-foreground: #1A3826;
-  --secondary-hover: #E2DACB;
+  --secondary: #ECE3D0;
+  --secondary-foreground: #292820;
+  --secondary-hover: #E0D3BC;
 
-  --muted: #F2EDE4;
-  --muted-foreground: #6B685F;
+  --muted: #EFE8DA;
+  --muted-foreground: #6E685C;
 
-  --destructive: #D9383A;
+  --destructive: #B42318;
   --destructive-foreground: #FFFFFF;
 
-  --border: #E5DFD3;
-  --input: #E5DFD3;
-  --ring: #1A3826;
+  --border: #E2D7C3;
+  --input: #E2D7C3;
+  --ring: #B85C38;
+  --radius: 0.875rem;
 
-  --radius: 0.75rem;
-
-  /* Brand Specialty Accents */
-  --gold: #D4AF37;
-  --cream: #FAF8F3;
-  --cream-dark: #F2EDE4;
-  --forest: #1A3826;
-  --terracotta: #E26D2B;
+  --mithila-indigo: #263B58;
+  --leaf-green: #244C38;
+  --parchment: #F7F0E3;
 }
 
 @theme {
@@ -73,18 +91,32 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  --color-gold: var(--gold);
   --color-cream: var(--cream);
+  --color-cream-soft: var(--cream-soft);
   --color-cream-dark: var(--cream-dark);
   --color-forest: var(--forest);
+  --color-forest-dark: var(--forest-dark);
+  --color-forest-light: var(--forest-light);
   --color-terracotta: var(--terracotta);
+  --color-gold: var(--gold);
+  --color-gold-light: var(--gold-light);
+  --color-gold-dark: var(--gold-dark);
+  --color-charcoal: var(--charcoal);
+  --color-charcoal-light: var(--charcoal-light);
+  --color-sage: var(--sage);
+  --color-sage-light: var(--sage-light);
+  --color-sage-dark: var(--sage-dark);
 
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-serif: "Playfair Display", Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-sans: "Plus Jakarta Sans", "Manrope", "Avenir Next", Avenir, ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Cinzel", "Fraunces", "Playfair Display", "Iowan Old Style", Georgia, serif;
 }
 
 * {
   border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
@@ -95,42 +127,104 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Custom premium scrollbar */
+::selection {
+  background: #B85C3828;
+  color: var(--primary-hover);
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
+
 ::-webkit-scrollbar-track {
-  background: #FAF8F3;
-}
-::-webkit-scrollbar-thumb {
-  background: #D3CCC0;
-  border-radius: 9999px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #B6AE9E;
+  background: var(--background);
 }
 
-/* Smooth glass effect */
+::-webkit-scrollbar-thumb {
+  background: #C49A5080;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #C49A50;
+}
+
 .glass {
-  background: rgba(250, 248, 243, 0.82);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(247, 240, 227, 0.90);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(229, 223, 211, 0.7);
+  border: 1px solid rgba(226, 215, 195, 0.85);
 }
 
-/* Taste badge shimmer */
+/* Mithila heritage double-line and diamond hatching borders */
+.mithila-border {
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 8px,
+    rgba(196, 154, 80, 0.55) 8px 10px,
+    transparent 10px 18px
+  );
+}
+
+.mithila-border-forest {
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 8px,
+    rgba(36, 76, 56, 0.4) 8px 10px,
+    transparent 10px 18px
+  );
+}
+
+.mithila-border-terracotta {
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 8px,
+    rgba(184, 92, 56, 0.45) 8px 10px,
+    transparent 10px 18px
+  );
+}
+
+/* Subtle organic grain overlay for heritage depth */
+.heritage-texture {
+  background-image: radial-gradient(rgba(196, 154, 80, 0.08) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
 @keyframes subtle-float {
-  0%, 100% { transform: translateY(0px); }
+  0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-6px); }
 }
 
 .animate-subtle-float {
-  animation: subtle-float 4s ease-in-out infinite;
+  animation: subtle-float 6s ease-in-out infinite;
+}
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.75; }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -4,6 +4,7 @@ import {
   createProduct,
   getProducts,
   getAdminProducts,
+  getAdminProductById,
   getProductBySlug,
   updateProduct,
   updateProductStatus,
@@ -40,6 +41,14 @@ router.get(
   authenticate,
   authorize("admin", "super_admin"),
   getAdminProducts
+);
+
+// Admin single product details (including inactive).
+router.get(
+  "/manage/:id",
+  authenticate,
+  authorize("admin", "super_admin"),
+  getAdminProductById
 );
 
 // Create product.

@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import {
   ShoppingBag,
   Trash2,
@@ -14,6 +13,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
+import { ProductThumbnail } from "@/components/storefront/ProductThumbnail";
 import { useAuth } from "@/hooks/useAuth";
 import { formatPrice, formatWeight } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -99,14 +99,7 @@ export default function CartPage() {
                 {items.map((item) => (
                   <div key={item.cartItemId} className="p-5 sm:p-6 flex flex-col sm:flex-row gap-5 items-start sm:items-center justify-between">
                     <div className="flex gap-4 items-center min-w-0">
-                      <div className="relative h-20 w-20 rounded-2xl bg-secondary/40 border border-border/50 flex-shrink-0 overflow-hidden">
-                        <Image
-                          src="/logo.png"
-                          alt={item.productName}
-                          fill
-                          className="object-contain p-2"
-                        />
-                      </div>
+                      <ProductThumbnail slug={item.productSlug} name={item.productName} className="h-20 w-20" />
 
                       <div className="min-w-0">
                         <h3 className="text-base font-bold text-foreground truncate">
