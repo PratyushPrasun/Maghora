@@ -2,13 +2,13 @@
 
 import React from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight } from "lucide-react";
 import { useCartStore } from "@/stores/useCartStore";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import { formatPrice, formatWeight } from "@/lib/utils";
+import { ProductThumbnail } from "@/components/storefront/ProductThumbnail";
 import { Button } from "@/components/ui/button";
 
 export function CartDrawer() {
@@ -122,14 +122,7 @@ export function CartDrawer() {
                             : "border-border/80 bg-background"
                         }`}
                       >
-                        <div className="h-20 w-20 rounded-xl bg-secondary/50 flex-shrink-0 overflow-hidden relative border border-border/40">
-                          <Image
-                            src="/logo.png"
-                            alt={item.productName}
-                            fill
-                            className="object-contain p-2"
-                          />
-                        </div>
+                        <ProductThumbnail slug={item.productSlug} name={item.productName} className="h-20 w-20" />
 
                         <div className="flex-1 flex flex-col justify-between min-w-0">
                           <div>

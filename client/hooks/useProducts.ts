@@ -37,6 +37,15 @@ export function useAdminProducts(params?: ProductQueryOptions) {
   });
 }
 
+export function useAdminProduct(id: string) {
+  return useQuery({
+    queryKey: ["products", "adminDetail", id],
+    queryFn: () => productsService.getAdminProductById(id),
+    enabled: Boolean(id),
+    staleTime: 15 * 1000,
+  });
+}
+
 export function useCreateProduct() {
   const queryClient = useQueryClient();
 

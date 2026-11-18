@@ -71,7 +71,7 @@ function ProductsCatalogueContent() {
             All Roasted Flavours
           </h1>
           <p className="mt-2 text-sm text-muted-foreground max-w-2xl">
-            Explore our complete lineup of artisanal flavoured makhana roasted in pure olive oil. Packed with plant protein, minerals, and uncompromising taste.
+            Explore our collection of flavoured makhana, roasted in olive oil and finished with handcrafted spice blends.
           </p>
         </div>
 

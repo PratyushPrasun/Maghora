@@ -84,7 +84,7 @@ export default function OrderDetailPage() {
               refetch();
             }
           },
-          theme: { color: "#1A3826" },
+          theme: { color: "#A74436" },
         };
         const rzp = new window.Razorpay(options);
         rzp.open();

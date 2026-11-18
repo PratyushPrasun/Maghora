@@ -63,6 +63,11 @@ export const productsService = {
     return response.data.data;
   },
 
+  async getAdminProductById(id: string): Promise<IProduct> {
+    const response = await apiClient.get<ApiResponse<{ product: IProduct }>>(`/products/manage/${id}`);
+    return response.data.data.product;
+  },
+
   async createProduct(formData: FormData): Promise<IProduct> {
     const response = await apiClient.post<ApiResponse<{ product: IProduct }>>("/products", formData, {
       headers: { "Content-Type": "multipart/form-data" },

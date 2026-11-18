@@ -25,6 +25,7 @@ import { formatPrice, formatWeight } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AddressFormDialog } from "@/components/storefront/AddressFormDialog";
+import { ProductThumbnail } from "@/components/storefront/ProductThumbnail";
 import { toast } from "sonner";
 
 declare global {
@@ -139,7 +140,7 @@ export default function CheckoutPage() {
             contact: user?.phone,
           },
           theme: {
-            color: "#1A3826", // Deep Earthy Green
+            color: "#A74436",
           },
         };
 
@@ -306,6 +307,7 @@ export default function CheckoutPage() {
                 <div className="max-h-60 overflow-y-auto space-y-3 pr-1">
                   {items.map((item) => (
                     <div key={item.cartItemId} className="flex items-center justify-between gap-3 text-xs">
+                      <ProductThumbnail slug={item.productSlug} name={item.productName} className="h-12 w-12 rounded-xl" />
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold text-foreground truncate">{item.productName}</p>
                         <p className="text-[11px] text-muted-foreground">

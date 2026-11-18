@@ -13,19 +13,19 @@ export function FeaturedFlavours() {
   const products = data?.products || [];
 
   return (
-    <section className="py-16 sm:py-24 bg-background">
+    <section className="bg-white py-16 sm:py-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 sm:mb-12 gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-accent mb-2">
+            <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[.18em] text-accent mb-3">
               <Sparkles className="h-3.5 w-3.5" />
               <span>Signature Collection</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold font-serif text-foreground">
-              Artisanal Flavours
+            <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight font-serif text-[#29251f]">
+              Discover your favourite crunch
             </h2>
-            <p className="mt-2 text-sm text-muted-foreground max-w-xl">
-              Slow-roasted in pure olive oil and dusted with handcrafted spice blends. Crisp, wholesome, and unapologetically addictive.
+            <p className="mt-3 text-sm leading-6 text-muted-foreground max-w-xl">
+              Thoughtfully roasted, generously seasoned, and made for the moments between meals.
             </p>
           </div>
 
@@ -71,7 +71,7 @@ export function FeaturedFlavours() {
 
         {/* Product Grid */}
         {!isLoading && products.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
             {products.map((product) => (
               <ProductCard key={product._id} product={product} />
             ))}
