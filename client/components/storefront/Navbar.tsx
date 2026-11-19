@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -9,12 +9,10 @@ import {
   User as UserIcon,
   Menu,
   X,
-  Search,
   LogOut,
   Package,
   ShieldCheck,
   ChevronDown,
-  ArrowRight,
 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,38 +32,85 @@ export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 10);
+    const handleScroll = () => setIsScrolled(window.scrollY > 15);
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const navLinks = [
-    { name: "Shop", href: "/products" },
-    { name: "Collections", href: "/categories" },
-    { name: "Our Story", href: "/#story" },
-  ];
-
   const totalCartCount = cart?.itemCount || 0;
+
+  const scrollToSection = (targetId: string) => {
+    const el = document.getElementById(targetId);
+    if (el) {
+      const headerOffset = 80;
+      const elementPosition = el.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth",
+      });
+      window.history.pushState(null, "", `#${targetId}`);
+    }
+  };
+
+  const handleNavClick = (e: React.MouseEvent, type: "home" | "shop" | "story" | "contact") => {
+    setMobileMenuOpen(false);
+
+    if (type === "home") {
+      if (pathname === "/") {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        window.history.pushState(null, "", "/");
+      }
+      return;
+    }
+
+    if (type === "shop") {
+      e.preventDefault();
+      if (pathname === "/") {
+        scrollToSection("products");
+      } else {
+        router.push("/#products");
+      }
+      return;
+    }
+
+    if (type === "story") {
+      e.preventDefault();
+      if (pathname === "/") {
+        scrollToSection("story");
+      } else {
+        router.push("/#story");
+      }
+      return;
+    }
+
+    // contact route handled normally by Link
+  };
 
   return (
     <>
-      {/* Announcement bar */}
-      <div className="bg-[#244C38] text-[#F7F0E3] text-center py-2 text-[11px] sm:text-xs font-medium tracking-wide select-none">
-        Free shipping on orders above ₹499 <span className="mx-2 text-[#C49A50]">·</span> Roasted in pure olive oil
+      {/* Minimal Announcement bar */}
+      <div className="bg-[#244C38] text-[#F7F0E3] text-center py-2 text-[11px] sm:text-xs font-medium tracking-wider select-none border-b border-[#C49A50]/20">
+        Roasted in Pure Olive Oil <span className="mx-2 text-[#C49A50]">·</span> GI-Origin Mithila Makhana <span className="mx-2 text-[#C49A50]">·</span> Free Shipping Above ₹499
       </div>
 
-      {/* Main header */}
+      {/* Sticky Main Header */}
       <header
         className={`sticky top-0 z-40 w-full transition-all duration-300 ${
           isScrolled
-            ? "bg-[#F7F0E3]/97 backdrop-blur-md shadow-[0_1px_12px_rgba(41,40,32,0.06)]"
-            : "bg-[#F7F0E3]"
+            ? "bg-[#F7F0E3]/95 backdrop-blur-md shadow-[0_4px_20px_rgba(41,40,32,0.06)] border-b border-[#E2D7C3]/80 py-3"
+            : "bg-[#F7F0E3] border-b border-[#E2D7C3]/60 py-4"
         }`}
       >
-        <div className="mx-auto flex h-16 sm:h-[4.5rem] max-w-6xl items-center justify-between px-5 sm:px-8">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group shrink-0">
-            <div className="relative h-9 w-9 sm:h-10 sm:w-10 shrink-0">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          {/* Brand Logo & Name */}
+          <Link
+            href="/"
+            onClick={(e) => handleNavClick(e, "home")}
+            className="flex items-center gap-2.5 group shrink-0"
+          >
+            <div className="relative h-9 w-9 sm:h-10 sm:w-10 shrink-0 transition-transform duration-300 group-hover:scale-105">
               <Image
                 src="/Magnora.png"
                 alt="Maghora"
@@ -74,95 +119,143 @@ export function Navbar() {
                 className="object-contain"
               />
             </div>
-            <span className="font-serif text-lg sm:text-xl font-bold tracking-[0.15em] text-[#292820] transition-colors group-hover:text-[#B85C38]">
-              MAGHORA
-            </span>
+            <div className="flex flex-col">
+              <span className="font-serif text-lg sm:text-xl font-extrabold tracking-[0.18em] text-[#292820] transition-colors group-hover:text-[#B85C38] leading-none">
+                MAGHORA
+              </span>
+              <span className="text-[9px] font-semibold tracking-[0.24em] text-[#C49A50] uppercase mt-0.5">
+                Mithila Flavours
+              </span>
+            </div>
           </Link>
 
-          {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => {
-              const isActive =
-                link.href === "/"
-                  ? pathname === "/"
-                  : link.href.startsWith("/#")
-                  ? false
-                  : pathname === link.href || pathname.startsWith(`${link.href}/`);
-              return (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  className={`text-[13px] font-medium tracking-wide transition-colors ${
-                    isActive
-                      ? "text-[#B85C38]"
-                      : "text-[#292820]/70 hover:text-[#292820]"
-                  }`}
-                >
-                  {link.name}
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* Actions */}
-          <div className="flex items-center gap-1 sm:gap-2">
-            {/* Search */}
+          {/* Desktop Navigation - Exactly 4 Primary Links */}
+          <nav className="hidden md:flex items-center gap-9 lg:gap-11">
+            {/* 1. Home */}
             <Link
-              href="/products"
-              className="p-2 text-[#292820]/60 hover:text-[#292820] transition-colors rounded-full"
-              title="Search"
+              href="/"
+              onClick={(e) => handleNavClick(e, "home")}
+              className={`text-[13px] font-semibold tracking-wider uppercase transition-colors duration-200 ${
+                pathname === "/"
+                  ? "text-[#B85C38]"
+                  : "text-[#292820]/75 hover:text-[#B85C38]"
+              }`}
             >
-              <Search className="h-[18px] w-[18px]" />
+              Home
             </Link>
 
-            {/* Cart */}
+            {/* 2. Shop -> Scrolls to #products */}
+            <Link
+              href="/#products"
+              onClick={(e) => handleNavClick(e, "shop")}
+              className="text-[13px] font-semibold tracking-wider uppercase text-[#292820]/75 hover:text-[#B85C38] transition-colors duration-200 cursor-pointer"
+            >
+              Shop
+            </Link>
+
+            {/* 3. Our Story -> Scrolls to #story */}
+            <Link
+              href="/#story"
+              onClick={(e) => handleNavClick(e, "story")}
+              className="text-[13px] font-semibold tracking-wider uppercase text-[#292820]/75 hover:text-[#B85C38] transition-colors duration-200 cursor-pointer"
+            >
+              Our Story
+            </Link>
+
+            {/* 4. Contact */}
+            <Link
+              href="/contact"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`text-[13px] font-semibold tracking-wider uppercase transition-colors duration-200 ${
+                pathname === "/contact"
+                  ? "text-[#B85C38]"
+                  : "text-[#292820]/75 hover:text-[#B85C38]"
+              }`}
+            >
+              Contact
+            </Link>
+          </nav>
+
+          {/* Right Header Actions: Account & Cart */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Shopping Cart Button */}
             <button
               onClick={openCart}
-              className="relative p-2 text-[#292820]/60 hover:text-[#292820] transition-colors rounded-full cursor-pointer"
-              aria-label={`Cart${totalCartCount ? `, ${totalCartCount} items` : ""}`}
+              className="relative p-2.5 text-[#292820]/80 hover:text-[#B85C38] transition-colors rounded-full hover:bg-[#ECE3D0]/60 cursor-pointer"
+              aria-label={`Shopping cart with ${totalCartCount} items`}
             >
-              <ShoppingBag className="h-[18px] w-[18px]" />
+              <ShoppingBag className="h-5 w-5" />
               {totalCartCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#B85C38] text-[9px] font-bold text-white">
+                <span className="absolute top-1 right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-[#B85C38] text-[9px] font-bold text-white shadow-xs">
                   {totalCartCount > 9 ? "9+" : totalCartCount}
                 </span>
               )}
             </button>
 
-            {/* Account */}
+            {/* User Account / Sign In */}
             {isAuthenticated ? (
               <div className="relative">
                 <button
                   onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                  className="flex items-center gap-1.5 p-1.5 rounded-full hover:bg-[#292820]/5 transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 p-1 rounded-full hover:bg-[#ECE3D0]/60 transition-colors cursor-pointer"
+                  aria-label="User account menu"
                 >
-                  <div className="h-7 w-7 rounded-full bg-[#244C38] text-[#F7F0E3] flex items-center justify-center text-[11px] font-bold">
-                    {user?.name?.charAt(0).toUpperCase()}
+                  <div className="h-8 w-8 rounded-full bg-[#244C38] text-[#F7F0E3] flex items-center justify-center text-xs font-bold shadow-xs">
+                    {user?.name?.charAt(0).toUpperCase() || "M"}
                   </div>
-                  <ChevronDown className="h-3 w-3 text-[#292820]/40 hidden sm:block" />
+                  <ChevronDown className="h-3.5 w-3.5 text-[#292820]/60 hidden sm:block" />
                 </button>
 
                 {userDropdownOpen && (
                   <>
-                    <div className="fixed inset-0 z-40" onClick={() => setUserDropdownOpen(false)} />
-                    <div className="absolute right-0 mt-2 w-52 rounded-xl border border-[#E2D7C3] bg-white p-1.5 shadow-lg z-50">
-                      <div className="px-3 py-2 border-b border-[#E2D7C3]/60 mb-1">
-                        <p className="text-xs font-semibold text-[#292820] truncate">{user?.name}</p>
-                        <p className="text-[11px] text-[#292820]/50 truncate">{user?.email}</p>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setUserDropdownOpen(false)}
+                    />
+                    <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-[#E2D7C3] bg-white p-2 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-150">
+                      <div className="px-3 py-2.5 border-b border-[#E2D7C3]/60 mb-1">
+                        <p className="text-xs font-bold text-[#292820] truncate">
+                          {user?.name}
+                        </p>
+                        <p className="text-[11px] text-[#292820]/55 truncate">
+                          {user?.email}
+                        </p>
                       </div>
-                      <Link href="/account" onClick={() => setUserDropdownOpen(false)} className="flex items-center gap-2 px-3 py-2 text-xs text-[#292820] hover:bg-[#F7F0E3] rounded-lg transition-colors">
-                        <UserIcon className="h-3.5 w-3.5 text-[#292820]/40" /> My Profile
+
+                      <Link
+                        href="/account"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-[#292820] hover:bg-[#F7F0E3] rounded-xl transition-colors"
+                      >
+                        <UserIcon className="h-3.5 w-3.5 text-[#244C38]" /> My Profile
                       </Link>
-                      <Link href="/orders" onClick={() => setUserDropdownOpen(false)} className="flex items-center gap-2 px-3 py-2 text-xs text-[#292820] hover:bg-[#F7F0E3] rounded-lg transition-colors">
-                        <Package className="h-3.5 w-3.5 text-[#292820]/40" /> My Orders
+
+                      <Link
+                        href="/orders"
+                        onClick={() => setUserDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-[#292820] hover:bg-[#F7F0E3] rounded-xl transition-colors"
+                      >
+                        <Package className="h-3.5 w-3.5 text-[#244C38]" /> My Orders
                       </Link>
+
                       {isAdmin && (
-                        <Link href="/admin/dashboard" onClick={() => setUserDropdownOpen(false)} className="flex items-center gap-2 px-3 py-2 text-xs text-[#244C38] font-medium hover:bg-[#F7F0E3] rounded-lg transition-colors">
-                          <ShieldCheck className="h-3.5 w-3.5" /> Admin
+                        <Link
+                          href="/admin/dashboard"
+                          onClick={() => setUserDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-[#244C38] hover:bg-[#F7F0E3] rounded-xl transition-colors"
+                        >
+                          <ShieldCheck className="h-3.5 w-3.5" /> Admin Portal
                         </Link>
                       )}
+
                       <div className="border-t border-[#E2D7C3]/60 mt-1 pt-1">
-                        <button onClick={() => { setUserDropdownOpen(false); logout(); }} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer text-left">
+                        <button
+                          onClick={() => {
+                            setUserDropdownOpen(false);
+                            logout();
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors cursor-pointer text-left"
+                        >
                           <LogOut className="h-3.5 w-3.5" /> Sign Out
                         </button>
                       </div>
@@ -172,51 +265,91 @@ export function Navbar() {
               </div>
             ) : (
               <Link href="/login" className="hidden sm:block">
-                <Button size="sm" className="h-8 rounded-full bg-[#292820] hover:bg-[#292820]/85 text-white text-xs px-4 font-medium">
+                <Button
+                  size="sm"
+                  className="h-9 rounded-full bg-[#244C38] hover:bg-[#1A3728] text-[#F7F0E3] text-xs font-semibold px-4 cursor-pointer"
+                >
                   Sign In
                 </Button>
               </Link>
             )}
 
-            {/* Mobile menu */}
+            {/* Mobile Hamburger Menu Toggle */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 text-[#292820]/70 cursor-pointer"
-              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              className="md:hidden p-2 text-[#292820] hover:text-[#B85C38] cursor-pointer"
+              aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
             >
-              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
           </div>
         </div>
 
-        {/* Mobile drawer */}
+        {/* Mobile Navigation Drawer */}
         <AnimatePresence>
           {mobileMenuOpen && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2 }}
-              className="md:hidden border-t border-[#E2D7C3]/60 bg-[#F7F0E3] overflow-hidden"
+              transition={{ duration: 0.22, ease: "easeInOut" }}
+              className="md:hidden border-t border-[#E2D7C3]/70 bg-[#F7F0E3] overflow-hidden shadow-lg"
             >
-              <div className="px-5 py-5 space-y-1">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.name}
-                    href={link.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block py-2.5 text-[15px] font-medium text-[#292820] hover:text-[#B85C38] transition-colors"
-                  >
-                    {link.name}
-                  </Link>
-                ))}
+              <div className="px-5 py-6 space-y-3">
+                {/* 1. Home */}
+                <Link
+                  href="/"
+                  onClick={(e) => handleNavClick(e, "home")}
+                  className={`block py-2 text-sm font-semibold tracking-wider uppercase transition-colors ${
+                    pathname === "/" ? "text-[#B85C38]" : "text-[#292820]"
+                  }`}
+                >
+                  Home
+                </Link>
+
+                {/* 2. Shop */}
+                <Link
+                  href="/#products"
+                  onClick={(e) => handleNavClick(e, "shop")}
+                  className="block py-2 text-sm font-semibold tracking-wider uppercase text-[#292820] hover:text-[#B85C38] transition-colors cursor-pointer"
+                >
+                  Shop
+                </Link>
+
+                {/* 3. Our Story */}
+                <Link
+                  href="/#story"
+                  onClick={(e) => handleNavClick(e, "story")}
+                  className="block py-2 text-sm font-semibold tracking-wider uppercase text-[#292820] hover:text-[#B85C38] transition-colors cursor-pointer"
+                >
+                  Our Story
+                </Link>
+
+                {/* 4. Contact */}
+                <Link
+                  href="/contact"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block py-2 text-sm font-semibold tracking-wider uppercase transition-colors ${
+                    pathname === "/contact" ? "text-[#B85C38]" : "text-[#292820]"
+                  }`}
+                >
+                  Contact
+                </Link>
+
                 {!isAuthenticated && (
-                  <div className="pt-4 border-t border-[#E2D7C3]/60 mt-3 space-y-2">
+                  <div className="pt-4 border-t border-[#E2D7C3]/70 space-y-2.5">
                     <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
-                      <Button className="w-full h-10 rounded-xl bg-[#292820] text-white text-sm">Sign In</Button>
+                      <Button className="w-full h-10 rounded-xl bg-[#244C38] text-white text-xs font-semibold uppercase tracking-wider">
+                        Sign In
+                      </Button>
                     </Link>
                     <Link href="/register" onClick={() => setMobileMenuOpen(false)}>
-                      <Button variant="outline" className="w-full h-10 rounded-xl text-sm border-[#E2D7C3]">Create Account</Button>
+                      <Button
+                        variant="outline"
+                        className="w-full h-10 rounded-xl text-xs font-semibold uppercase tracking-wider border-[#E2D7C3]"
+                      >
+                        Create Account
+                      </Button>
                     </Link>
                   </div>
                 )}

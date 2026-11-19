@@ -28,7 +28,7 @@ async function getAvailableVariant(
   }
 
   const variant = product.variants.find(
-    (item) => item._id.toString() === variantId
+    (item) => item._id?.toString() === variantId
   );
 
   if (!variant || !variant.isActive) {
@@ -62,7 +62,7 @@ export async function getCart(userId: string) {
     const product = productMap.get(cartItem.productId.toString());
 
     const variant = product?.variants.find(
-      (item) => item._id.toString() === cartItem.variantId.toString()
+      (item) => item._id?.toString() === cartItem.variantId.toString()
     );
 
     const available = Boolean(

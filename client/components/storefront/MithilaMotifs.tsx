@@ -173,3 +173,44 @@ export function MithilaDivider({ className = "my-6", text }: { className?: strin
     </div>
   );
 }
+
+/**
+ * Traditional Mithila Surya (Radiant Sun Motif)
+ * Traditional emblem of life and vitality in Madhubani art.
+ */
+export function MithilaSun({ className = "h-8 w-8", color = "currentColor" }: MotifProps) {
+  return (
+    <svg
+      viewBox="0 0 100 100"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle cx="50" cy="50" r="16" stroke={color} strokeWidth="2.2" />
+      <circle cx="50" cy="50" r="8" fill={color} opacity="0.85" />
+      <circle cx="50" cy="50" r="3" fill="#FFF" />
+      {/* 8 Primary Sun Rays */}
+      <path d="M50 14L50 26M50 74L50 86M14 50L26 50M74 50L86 50" stroke={color} strokeWidth="2" strokeLinecap="round" />
+      <path d="M24.5 24.5L33 33M67 67L75.5 75.5M75.5 24.5L67 33M33 67L24.5 75.5" stroke={color} strokeWidth="2" strokeLinecap="round" />
+      {/* Intermediate Delicate Dots */}
+      <circle cx="50" cy="8" r="1.8" fill={color} />
+      <circle cx="50" cy="92" r="1.8" fill={color} />
+      <circle cx="8" cy="50" r="1.8" fill={color} />
+      <circle cx="92" cy="50" r="1.8" fill={color} />
+    </svg>
+  );
+}
+
+/**
+ * Traditional Mithila Corner Flourish
+ */
+export function MithilaCorner({ className = "h-6 w-6 text-[#C49A50]" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 40 40" fill="none" className={className} aria-hidden="true">
+      <path d="M4 36V12C4 7.58 7.58 4 12 4H36" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M10 36V16C10 12.69 12.69 10 16 10H36" stroke="currentColor" strokeWidth="1" strokeDasharray="2 2" />
+      <circle cx="4" cy="4" r="2.5" fill="currentColor" />
+    </svg>
+  );
+}

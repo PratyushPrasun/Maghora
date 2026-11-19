@@ -30,7 +30,7 @@ app.use(express.json({
         rawBody?: Buffer;
       };
 
-      const pathname = req.originalUrl.split("?")[0];
+      const pathname = (request.originalUrl || req.url || "").split("?")[0];
 
       if (pathname === "/api/payments/webhook") {
         request.rawBody = Buffer.from(buffer);

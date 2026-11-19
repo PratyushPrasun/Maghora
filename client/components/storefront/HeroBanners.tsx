@@ -2,22 +2,22 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-const banners = [
+const BANNERS = [
   {
     src: "/banner1.png",
-    alt: "Maghora Premium Makhana — Campaign Banner 1",
+    alt: "Maghora Premium Makhana — Campaign Showcase 1",
   },
   {
     src: "/banner2.png",
-    alt: "Maghora Premium Makhana — Campaign Banner 2",
+    alt: "Maghora Premium Makhana — Campaign Showcase 2",
   },
   {
     src: "/banner3.png",
-    alt: "Maghora Premium Makhana — Campaign Banner 3",
+    alt: "Maghora Premium Makhana — Campaign Showcase 3",
   },
 ];
 
@@ -26,6 +26,27 @@ export function HeroBanners() {
   const [direction, setDirection] = useState(1);
   const [isPaused, setIsPaused] = useState(false);
   const touchStartX = useRef<number | null>(null);
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const handleBannerClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (pathname === "/") {
+      const el = document.getElementById("products");
+      if (el) {
+        const headerOffset = 80;
+        const elementPosition = el.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: "smooth",
+        });
+        window.history.pushState(null, "", "#products");
+      }
+    } else {
+      router.push("/#products");
+    }
+  };
 
   const goTo = useCallback(
     (index: number) => {
@@ -37,12 +58,12 @@ export function HeroBanners() {
 
   const next = useCallback(() => {
     setDirection(1);
-    setCurrent((prev) => (prev + 1) % banners.length);
+    setCurrent((prev) => (prev + 1) % BANNERS.length);
   }, []);
 
   const prev = useCallback(() => {
     setDirection(-1);
-    setCurrent((prev) => (prev - 1 + banners.length) % banners.length);
+    setCurrent((prev) => (prev - 1 + BANNERS.length) % BANNERS.length);
   }, []);
 
   // Autoplay with pause on hover
@@ -52,7 +73,7 @@ export function HeroBanners() {
     return () => clearInterval(timer);
   }, [next, isPaused]);
 
-  // Touch / swipe handling
+  // Touch / swipe support
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
   };
@@ -69,70 +90,71 @@ export function HeroBanners() {
 
   return (
     <section
-      className="bg-[#F7F0E3] pt-3 sm:pt-5 lg:pt-7 pb-2 select-none"
-      aria-label="Campaign Hero Banners"
+      id="hero-carousel"
+      className="bg-[#F7F0E3] pt-3 sm:pt-5 pb-4 select-none"
+      aria-label="Maghora Hero Carousel"
     >
-      <div className="mx-auto max-w-5xl px-3 sm:px-6">
-        {/* Banner Card Frame — exact 2:1 aspect ratio, constrained max-width so it never feels oversized */}
+      <div className="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8">
+        {/* Full available hero width frame with exact 2:1 natural banner aspect ratio */}
         <div
-          className="relative w-full aspect-[2/1] rounded-xl sm:rounded-2xl lg:rounded-3xl overflow-hidden shadow-sm border border-[#E2D7C3]/80 bg-[#ECE3D0] group"
+          className="relative w-full aspect-[2/1] rounded-2xl sm:rounded-3xl overflow-hidden shadow-[0_8px_30px_rgb(41,40,32,0.06)] border border-[#E2D7C3]/80 bg-[#ECE3D0] group"
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
-          <AnimatePresence initial={false} custom={direction}>
+          <AnimatePresence initial={false} custom={direction} mode="wait">
             <motion.div
               key={current}
               custom={direction}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.5, ease: "easeInOut" }}
-              className="absolute inset-0 w-full h-full"
+              transition={{ duration: 0.6, ease: "easeInOut" }}
+              className="absolute inset-0 w-full h-full cursor-pointer"
+              onClick={handleBannerClick}
             >
-              <Link href="/products" className="block relative w-full h-full cursor-pointer">
-                <Image
-                  src={banners[current].src}
-                  alt={banners[current].alt}
-                  fill
-                  priority={current === 0}
-                  quality={90}
-                  className="object-cover object-center w-full h-full"
-                  sizes="(min-width: 1280px) 1024px, (min-width: 768px) 90vw, 100vw"
-                />
-              </Link>
+              <Image
+                src={BANNERS[current].src}
+                alt={BANNERS[current].alt}
+                fill
+                priority={current === 0}
+                quality={92}
+                className="object-cover object-center w-full h-full"
+                sizes="(min-width: 1280px) 1280px, (min-width: 768px) 95vw, 100vw"
+              />
             </motion.div>
           </AnimatePresence>
 
-          {/* Navigation arrows */}
+          {/* Previous Slide Control */}
           <button
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               prev();
             }}
-            className="absolute left-2.5 sm:left-4 top-1/2 -translate-y-1/2 h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-black/25 hover:bg-black/45 text-white backdrop-blur-md flex items-center justify-center transition-all duration-300 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer shadow-md z-10"
-            aria-label="Previous banner"
+            className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 h-8 w-8 sm:h-11 sm:w-11 rounded-full bg-black/35 hover:bg-black/60 text-white backdrop-blur-md flex items-center justify-center transition-all duration-300 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer shadow-md z-10 hover:scale-105 active:scale-95"
+            aria-label="Previous campaign banner"
           >
             <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
           </button>
 
+          {/* Next Slide Control */}
           <button
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               next();
             }}
-            className="absolute right-2.5 sm:right-4 top-1/2 -translate-y-1/2 h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-black/25 hover:bg-black/45 text-white backdrop-blur-md flex items-center justify-center transition-all duration-300 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer shadow-md z-10"
-            aria-label="Next banner"
+            className="absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 h-8 w-8 sm:h-11 sm:w-11 rounded-full bg-black/35 hover:bg-black/60 text-white backdrop-blur-md flex items-center justify-center transition-all duration-300 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 cursor-pointer shadow-md z-10 hover:scale-105 active:scale-95"
+            aria-label="Next campaign banner"
           >
             <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
           </button>
 
-          {/* Carousel indicators with pill backdrop */}
-          <div className="absolute bottom-2.5 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-black/25 backdrop-blur-md z-10">
-            {banners.map((_, i) => (
+          {/* Subtle Carousel Indicators */}
+          <div className="absolute bottom-3 sm:bottom-5 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/30 backdrop-blur-md z-10">
+            {BANNERS.map((_, i) => (
               <button
                 key={i}
                 onClick={(e) => {
@@ -142,10 +164,10 @@ export function HeroBanners() {
                 }}
                 className={`transition-all duration-300 rounded-full cursor-pointer ${
                   i === current
-                    ? "w-5 sm:w-6 h-1.5 sm:h-2 bg-[#C49A50]"
+                    ? "w-6 sm:w-7 h-1.5 sm:h-2 bg-[#C49A50]"
                     : "w-1.5 sm:w-2 h-1.5 sm:h-2 bg-white/60 hover:bg-white"
                 }`}
-                aria-label={`Go to banner slide ${i + 1}`}
+                aria-label={`Switch to banner ${i + 1}`}
               />
             ))}
           </div>
