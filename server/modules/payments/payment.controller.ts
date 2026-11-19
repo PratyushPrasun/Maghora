@@ -16,7 +16,7 @@ function badRequest(message: string) {
 }
 
 function getUserId(req: Request): string {
-  const userId = req.currentUser?.id;
+  const userId = req.currentUser?._id?.toString();
 
   if (!userId) {
     throw Object.assign(new Error("Authentication required"), {

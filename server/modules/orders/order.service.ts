@@ -82,7 +82,7 @@ export async function createOrder(
 
                 const variant = product.variants.find(
                     (item) =>
-                        item._id.toString() === cartItem.variantId.toString()
+                        item._id?.toString() === cartItem.variantId.toString()
                 );
 
                 if (!variant || !variant.isActive) {
