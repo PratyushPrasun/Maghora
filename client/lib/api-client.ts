@@ -40,10 +40,13 @@ apiClient.interceptors.response.use(
   (error: AxiosError<{ success?: boolean; message?: string; errors?: Array<{ field?: string; message: string }> }>) => {
     if (error.response) {
       const { status, data } = error.response;
+      const firstError = data?.errors && data.errors.length > 0 ? data.errors[0].message : null;
       const message =
-        data?.message ||
-        (data?.errors && data.errors.length > 0 ? data.errors[0].message : null) ||
-        `Request failed with status code ${status}`;
+        firstError && (!data?.message || data.message === "Validation failed")
+          ? firstError
+          : data?.message ||
+            firstError ||
+            `Request failed with status code ${status}`;
 
       const clientError = new ApiClientError(message, status, data?.errors);
 

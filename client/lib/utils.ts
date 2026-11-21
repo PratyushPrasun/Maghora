@@ -61,3 +61,30 @@ export function formatDate(dateStr: string | Date | undefined): string {
   }).format(date);
 }
 
+/**
+ * Resolves the authentic packaging image for a product.
+ * Prefers product image from API, and falls back gracefully to
+ * official packaging photography in /public based on flavour/slug.
+ */
+export function getProductPackagingImage(product?: {
+  images?: Array<{ url: string; isPrimary?: boolean }>;
+  slug?: string;
+  name?: string;
+} | null): string {
+  if (!product) return "/logo.png";
+  const primary = product.images?.find((img) => img.isPrimary)?.url || product.images?.[0]?.url;
+  if (primary && !primary.includes("logo.png") && !primary.includes("Magnora.png")) {
+    return primary;
+  }
+  const key = `${product.slug || ""} ${product.name || ""}`.toLowerCase();
+  if (key.includes("peri")) return "/maghora_peri_peri_01.jpg";
+  if (key.includes("mac") || key.includes("cheese")) return "/maghora_mac_cheese_01.jpg";
+  if (key.includes("onion") || key.includes("cream")) return "/maghora_cream_onion.jpg";
+  if (key.includes("sweet") || key.includes("chilli") || key.includes("jaggery")) return "/maghora_sweet_chilli_01.jpg";
+  if (key.includes("salt") || key.includes("pepper")) return "/maghora_salt_pepper_01.jpg";
+  if (key.includes("pudina") || key.includes("mint") || key.includes("jeera")) return "/maghora_pudina.jpg";
+  if (key.includes("tomato") || key.includes("amchur")) return "/maghora_peri_peri_02.jpg";
+  return primary || "/maghora_peri_peri_01.jpg";
+}
+
+

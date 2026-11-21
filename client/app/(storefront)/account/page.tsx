@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AddressFormDialog } from "@/components/storefront/AddressFormDialog";
+import { MithilaLotus } from "@/components/storefront/MithilaMotifs";
 import { toast } from "sonner";
 
 const changePasswordSchema = z
@@ -68,8 +69,13 @@ export default function AccountPage() {
 
   if (authLoading || !user) {
     return (
-      <div className="py-20 text-center">
-        <p className="text-sm text-muted-foreground animate-pulse">Loading account...</p>
+      <div className="py-28 text-center bg-[#F8EEDC] min-h-screen flex flex-col items-center justify-center">
+        <div className="relative mb-3">
+          <MithilaLotus className="h-9 w-9 text-[#E8B84E] animate-pulse" />
+        </div>
+        <p className="text-xs sm:text-sm font-serif font-bold text-[#702C32] tracking-[0.2em] uppercase">
+          Loading Maghora Account...
+        </p>
       </div>
     );
   }
@@ -88,75 +94,79 @@ export default function AccountPage() {
   };
 
   return (
-    <div className="py-12 sm:py-16 bg-background min-h-screen">
+    <div className="py-8 sm:py-14 bg-[#F8EEDC] min-h-screen">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-border/80">
+        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E8D7BE]/80">
           <div>
-            <h1 className="text-3xl font-bold font-serif text-foreground">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EEDEC4]/60 border border-[#E8D7BE] text-[10px] font-bold uppercase tracking-[0.22em] text-[#702C32] mb-1.5 font-serif">
+              <MithilaLotus className="h-3 w-3 text-[#E8B84E]" />
+              <span>Customer Portal</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold font-serif text-[#33251F]">
               My Maghora Account
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-xs sm:text-sm text-[#7B685F] mt-1">
               Manage your personal profile, addresses, security, and orders
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <Button
               variant="outline"
               size="sm"
               onClick={() => router.push("/orders")}
-              className="gap-2 rounded-xl text-xs"
+              className="gap-2 rounded-xl text-xs font-serif font-bold uppercase tracking-wider border-[#E8D7BE] bg-white text-[#33251F] hover:bg-[#F8EEDC] cursor-pointer"
             >
-              <Package className="h-4 w-4" /> View My Orders
+              <Package className="h-4 w-4 text-[#702C32]" /> View Orders
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={() => logout()}
-              className="text-xs text-destructive hover:bg-destructive/10 rounded-xl gap-1.5"
+              className="text-xs text-rose-600 hover:bg-rose-50 rounded-xl gap-1.5 cursor-pointer"
             >
               <LogOut className="h-4 w-4" /> Sign Out
             </Button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-          {/* Left Tabs Menu */}
-          <div className="md:col-span-4 lg:col-span-3 space-y-1">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-5 md:gap-6 items-start">
+          {/* Left Tabs Menu: Horizontal scrollable pills on mobile, vertical sidebar on md+ */}
+          <div className="md:col-span-4 lg:col-span-3 flex flex-row md:flex-col gap-2 overflow-x-auto pb-1 md:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0">
             <button
               onClick={() => setActiveTab("profile")}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold transition-all cursor-pointer text-left ${
+              className={`shrink-0 md:w-full flex items-center justify-center md:justify-start gap-2.5 px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-xl sm:rounded-2xl text-xs font-serif font-bold uppercase tracking-wider transition-all cursor-pointer text-left whitespace-nowrap min-h-[40px] ${
                 activeTab === "profile"
-                  ? "bg-primary text-primary-foreground shadow-xs"
-                  : "bg-card text-foreground hover:bg-muted"
+                  ? "bg-[#702C32] text-[#F8EEDC] shadow-xs"
+                  : "bg-white text-[#33251F] hover:bg-[#F8EEDC]/60 border border-[#E8D7BE]"
               }`}
             >
-              <UserIcon className="h-4 w-4" />
-              <span>Profile Information</span>
+              <UserIcon className="h-4 w-4 shrink-0" />
+              <span>Profile Details</span>
             </button>
 
             <button
               onClick={() => setActiveTab("addresses")}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold transition-all cursor-pointer text-left ${
+              className={`shrink-0 md:w-full flex items-center justify-center md:justify-start gap-2.5 px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-xl sm:rounded-2xl text-xs font-serif font-bold uppercase tracking-wider transition-all cursor-pointer text-left whitespace-nowrap min-h-[40px] ${
                 activeTab === "addresses"
-                  ? "bg-primary text-primary-foreground shadow-xs"
-                  : "bg-card text-foreground hover:bg-muted"
+                  ? "bg-[#702C32] text-[#F8EEDC] shadow-xs"
+                  : "bg-white text-[#33251F] hover:bg-[#F8EEDC]/60 border border-[#E8D7BE]"
               }`}
             >
-              <MapPin className="h-4 w-4" />
-              <span>Saved Addresses ({addresses.length})</span>
+              <MapPin className="h-4 w-4 shrink-0" />
+              <span>Addresses ({addresses.length})</span>
             </button>
 
             <button
               onClick={() => setActiveTab("security")}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-semibold transition-all cursor-pointer text-left ${
+              className={`shrink-0 md:w-full flex items-center justify-center md:justify-start gap-2.5 px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-xl sm:rounded-2xl text-xs font-serif font-bold uppercase tracking-wider transition-all cursor-pointer text-left whitespace-nowrap min-h-[40px] ${
                 activeTab === "security"
-                  ? "bg-primary text-primary-foreground shadow-xs"
-                  : "bg-card text-foreground hover:bg-muted"
+                  ? "bg-[#702C32] text-[#F8EEDC] shadow-xs"
+                  : "bg-white text-[#33251F] hover:bg-[#F8EEDC]/60 border border-[#E8D7BE]"
               }`}
             >
-              <Lock className="h-4 w-4" />
-              <span>Login & Security</span>
+              <Lock className="h-4 w-4 shrink-0" />
+              <span>Password &amp; Security</span>
             </button>
           </div>
 
@@ -164,110 +174,118 @@ export default function AccountPage() {
           <div className="md:col-span-8 lg:col-span-9">
             {/* Tab 1: Profile */}
             {activeTab === "profile" && (
-              <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-xs space-y-6">
-                <h2 className="text-xl font-bold font-serif text-foreground">
-                  Personal Details
+              <div className="rounded-2xl sm:rounded-3xl border border-[#E8D7BE] bg-white p-4 sm:p-7 shadow-xs space-y-5">
+                <h2 className="text-lg sm:text-xl font-bold font-serif text-[#33251F]">
+                  Personal Profile
                 </h2>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-2xl bg-secondary/30 border border-border/60">
-                    <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-[#F8EEDC]/35 border border-[#E8D7BE]/60">
+                    <span className="text-[10px] uppercase tracking-wider text-[#7B685F] font-bold font-serif block">
                       Full Name
                     </span>
-                    <p className="text-base font-bold text-foreground mt-0.5">{user.name}</p>
+                    <p className="text-sm sm:text-base font-bold text-[#33251F] mt-0.5">{user.name}</p>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-secondary/30 border border-border/60">
-                    <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+                  <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-[#F8EEDC]/35 border border-[#E8D7BE]/60">
+                    <span className="text-[10px] uppercase tracking-wider text-[#7B685F] font-bold font-serif block">
                       Mobile Number
                     </span>
-                    <p className="text-base font-bold text-foreground mt-0.5">{user.phone}</p>
+                    <p className="text-sm sm:text-base font-bold text-[#33251F] mt-0.5">{user.phone}</p>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-secondary/30 border border-border/60 sm:col-span-2">
-                    <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+                  <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-[#F8EEDC]/35 border border-[#E8D7BE]/60 sm:col-span-2">
+                    <span className="text-[10px] uppercase tracking-wider text-[#7B685F] font-bold font-serif block">
                       Email Address
                     </span>
-                    <p className="text-base font-bold text-foreground mt-0.5">{user.email}</p>
+                    <p className="text-sm sm:text-base font-bold text-[#33251F] mt-0.5 break-all">{user.email}</p>
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-border/60 flex items-center gap-3 text-xs text-muted-foreground">
-                  <Shield className="h-4 w-4 text-primary" />
-                  <span>Your account role is <strong className="text-foreground uppercase">{user.role}</strong>.</span>
+                <div className="pt-3 border-t border-[#E8D7BE]/60 flex items-center gap-2 text-xs text-[#7B685F]">
+                  <Shield className="h-4 w-4 text-[#702C32]" />
+                  <span>Account Access: <strong className="text-[#33251F] uppercase font-serif">{user.role}</strong></span>
                 </div>
               </div>
             )}
 
             {/* Tab 2: Addresses */}
             {activeTab === "addresses" && (
-              <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-xs space-y-6">
-                <div className="flex items-center justify-between pb-4 border-b border-border/60">
+              <div className="rounded-2xl sm:rounded-3xl border border-[#E8D7BE] bg-white p-4 sm:p-7 shadow-xs space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E8D7BE]/70">
                   <div>
-                    <h2 className="text-xl font-bold font-serif text-foreground">
+                    <h2 className="text-lg sm:text-xl font-bold font-serif text-[#33251F]">
                       Delivery Addresses
                     </h2>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Save multiple shipping locations for seamless one-click checkout
+                    <p className="text-xs text-[#7B685F] mt-0.5">
+                      Save shipping locations for faster one-click checkout
                     </p>
                   </div>
 
                   <Button
                     onClick={() => setShowAddressDialog(true)}
                     size="sm"
-                    className="rounded-xl gap-1 text-xs"
+                    className="rounded-xl gap-1 text-xs font-serif font-bold uppercase tracking-wider bg-[#702C32] hover:bg-[#551F24] text-[#F8EEDC] self-start sm:self-auto min-h-[36px]"
                   >
                     <Plus className="h-3.5 w-3.5" /> Add Address
                   </Button>
                 </div>
 
                 {addresses.length === 0 ? (
-                  <div className="p-12 text-center border border-dashed border-border rounded-2xl">
-                    <p className="text-sm text-muted-foreground mb-4">
+                  <div className="p-6 sm:p-8 text-center border border-dashed border-[#E8D7BE] rounded-2xl bg-[#F8EEDC]/30">
+                    <p className="text-xs sm:text-sm text-[#7B685F] mb-3">
                       No saved addresses found.
                     </p>
-                    <Button onClick={() => setShowAddressDialog(true)} size="sm">
-                      Add Your First Address
+                    <Button
+                      onClick={() => setShowAddressDialog(true)}
+                      size="sm"
+                      className="bg-[#702C32] hover:bg-[#551F24] text-[#F8EEDC] text-xs font-serif uppercase tracking-wider min-h-[40px]"
+                    >
+                      Add Address
                     </Button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     {addresses.map((addr) => (
                       <div
                         key={addr._id}
-                        className={`p-4 rounded-2xl border transition-all flex flex-col justify-between ${
-                          addr.isDefault ? "border-primary bg-primary/5" : "border-border bg-background"
+                        className={`p-3.5 sm:p-4 rounded-xl sm:rounded-2xl border transition-all flex flex-col justify-between ${
+                          addr.isDefault
+                            ? "border-[#702C32] bg-[#F8EEDC]/35"
+                            : "border-[#E8D7BE] bg-white"
                         }`}
                       >
                         <div className="space-y-1 text-xs">
                           <div className="flex items-center justify-between gap-2">
-                            <span className="font-bold text-sm text-foreground">
+                            <span className="font-serif font-bold text-sm text-[#33251F]">
                               {addr.recipientName}
                             </span>
-                            <span className="capitalize font-semibold text-[10px] bg-secondary px-2 py-0.5 rounded-full text-secondary-foreground">
+                            <span className="capitalize font-semibold text-[10px] bg-[#EEDEC4] px-2 py-0.5 rounded-full text-[#702C32]">
                               {addr.label}
                             </span>
                           </div>
-                          <p className="text-foreground/80 leading-relaxed pt-1">
+                          <p className="text-[#33251F]/80 leading-relaxed">
                             {addr.addressLine1}
                             {addr.addressLine2 ? `, ${addr.addressLine2}` : ""}
-                            {addr.landmark ? `, ${addr.landmark}` : ""}
+                            {addr.landmark ? `, Near ${addr.landmark}` : ""}
                           </p>
-                          <p className="text-muted-foreground">
+                          <p className="text-[#7B685F]">
                             {addr.city}, {addr.state} - {addr.postalCode}
                           </p>
-                          <p className="text-foreground font-medium pt-1">📞 {addr.phone}</p>
+                          <p className="text-[#33251F] font-medium pt-0.5">
+                            📞 {addr.phone}
+                          </p>
                         </div>
 
-                        <div className="mt-4 pt-3 border-t border-border/60 flex items-center justify-between">
+                        <div className="mt-4 pt-3 border-t border-[#E8D7BE]/60 flex items-center justify-between">
                           {addr.isDefault ? (
-                            <span className="text-[11px] font-bold text-primary flex items-center gap-1">
-                              <CheckCircle2 className="h-3.5 w-3.5" /> Default Address
+                            <span className="text-[10px] font-bold text-[#536B42] flex items-center gap-1">
+                              <CheckCircle2 className="h-3 w-3" /> Default
                             </span>
                           ) : (
                             <button
                               onClick={() => setDefaultAddress(addr._id)}
-                              className="text-[11px] font-medium text-accent hover:underline cursor-pointer"
+                              className="text-[11px] text-[#702C32] font-semibold hover:underline cursor-pointer"
                             >
                               Set as Default
                             </button>
@@ -275,10 +293,10 @@ export default function AccountPage() {
 
                           <button
                             onClick={() => deleteAddress(addr._id)}
-                            className="text-muted-foreground hover:text-destructive p-1 rounded transition-colors cursor-pointer"
-                            title="Delete Address"
+                            className="text-[#7B685F] hover:text-rose-600 p-1.5 rounded-lg transition-colors cursor-pointer"
+                            aria-label="Delete address"
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
                       </div>
@@ -290,51 +308,55 @@ export default function AccountPage() {
 
             {/* Tab 3: Security */}
             {activeTab === "security" && (
-              <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-xs space-y-6 max-w-lg">
-                <div>
-                  <h2 className="text-xl font-bold font-serif text-foreground">
-                    Change Password
-                  </h2>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Update your account password using argon2id cryptographic hashing
-                  </p>
-                </div>
+              <div className="rounded-2xl sm:rounded-3xl border border-[#E8D7BE] bg-white p-4 sm:p-7 shadow-xs space-y-5 max-w-lg">
+                <h2 className="text-lg sm:text-xl font-bold font-serif text-[#33251F]">
+                  Change Password
+                </h2>
 
-                <form onSubmit={handleSubmit(onChangePasswordSubmit)} className="space-y-4">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold">Current Password *</Label>
+                <form onSubmit={handleSubmit(onChangePasswordSubmit)} className="space-y-3.5">
+                  <div className="space-y-1">
+                    <Label className="text-xs font-serif font-bold uppercase tracking-wider text-[#33251F]">
+                      Current Password
+                    </Label>
                     <Input
                       type="password"
                       {...register("currentPassword")}
                       placeholder="••••••••"
                       error={errors.currentPassword?.message}
+                      className="border-[#E8D7BE] text-xs focus:ring-[#702C32]/30"
                     />
                   </div>
 
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold">New Password *</Label>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-serif font-bold uppercase tracking-wider text-[#33251F]">
+                      New Password
+                    </Label>
                     <Input
                       type="password"
                       {...register("password")}
-                      placeholder="Minimum 8 characters"
+                      placeholder="At least 8 characters"
                       error={errors.password?.message}
+                      className="border-[#E8D7BE] text-xs focus:ring-[#702C32]/30"
                     />
                   </div>
 
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold">Confirm New Password *</Label>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-serif font-bold uppercase tracking-wider text-[#33251F]">
+                      Confirm New Password
+                    </Label>
                     <Input
                       type="password"
                       {...register("confirmPassword")}
                       placeholder="Re-enter new password"
                       error={errors.confirmPassword?.message}
+                      className="border-[#E8D7BE] text-xs focus:ring-[#702C32]/30"
                     />
                   </div>
 
                   <Button
                     type="submit"
                     isLoading={isChangingPassword}
-                    className="rounded-xl font-bold"
+                    className="w-full sm:w-auto rounded-xl font-serif font-bold uppercase tracking-wider text-xs h-10 px-6 bg-[#702C32] hover:bg-[#551F24] text-[#F8EEDC] shadow-md mt-2 cursor-pointer"
                   >
                     Update Password
                   </Button>
@@ -352,4 +374,3 @@ export default function AccountPage() {
     </div>
   );
 }
-

@@ -198,7 +198,7 @@ export function SignatureFlavours() {
                       {currentFlavour.spiceLevel} Heat
                     </span>
                     <span className="px-3 py-1 rounded-full bg-[#DCE5D7] text-[#244C38] text-[11px] font-semibold">
-                      100% Olive Oil Roast
+                      Olive Oil
                     </span>
                     <span className="px-3 py-1 rounded-full bg-[#EFE8DA] text-[#6E685C] text-[11px] font-semibold">
                       Zero Trans Fat

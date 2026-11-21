@@ -1,59 +1,40 @@
 import mongoose from "mongoose";
 
 import Address from "./address.model.js";
-
-function createError(message: string, statusCode: number) {
-  return Object.assign(new Error(message), { statusCode });
-}
+import { ApiError } from "../../utils/ApiError.js";
 
 export async function createAddress(
   userId: string,
   data: Record<string, any>
 ) {
-  const session = await mongoose.startSession();
+  const existingCount = await Address.countDocuments({
+    userId,
+  });
 
-  try {
-    let address: any;
-
-    await session.withTransaction(async () => {
-      const existingCount = await Address.countDocuments({
-        userId,
-      }).session(session);
-
-      if (existingCount >= 20) {
-        throw createError(
-          "You can save a maximum of 20 addresses",
-          400
-        );
-      }
-
-      const shouldBeDefault =
-        data.isDefault || existingCount === 0;
-
-      if (shouldBeDefault) {
-        await Address.updateMany(
-          { userId, isDefault: true },
-          { $set: { isDefault: false } },
-          { session }
-        );
-      }
-
-      const [created] = await Address.create(
-        [{
-          ...data,
-          userId,
-          isDefault: shouldBeDefault,
-        }],
-        { session }
-      );
-
-      address = created;
-    });
-
-    return address;
-  } finally {
-    await session.endSession();
+  if (existingCount >= 20) {
+    throw new ApiError(
+      400,
+      "You can save a maximum of 20 addresses"
+    );
   }
+
+  const shouldBeDefault =
+    data.isDefault || existingCount === 0;
+
+  if (shouldBeDefault) {
+    await Address.updateMany(
+      { userId, isDefault: true },
+      { $set: { isDefault: false } }
+    );
+  }
+
+  const address = await Address.create({
+    ...data,
+    userId,
+    isDefault: shouldBeDefault,
+  });
+
+  return address;
 }
 
 export async function getAddresses(userId: string) {
@@ -67,7 +48,7 @@ export async function getAddressById(
   addressId: string
 ) {
   if (!mongoose.isValidObjectId(addressId)) {
-    throw createError("Invalid address ID", 400);
+    throw new ApiError(400, "Invalid address ID");
   }
 
   const address = await Address.findOne({
@@ -76,7 +57,7 @@ export async function getAddressById(
   });
 
   if (!address) {
-    throw createError("Address not found", 404);
+    throw new ApiError(404, "Address not found");
   }
 
   return address;
@@ -88,43 +69,29 @@ export async function updateAddress(
   data: Record<string, any>
 ) {
   if (!mongoose.isValidObjectId(addressId)) {
-    throw createError("Invalid address ID", 400);
+    throw new ApiError(400, "Invalid address ID");
   }
 
-  const session = await mongoose.startSession();
+  const address = await Address.findOne({
+    _id: addressId,
+    userId,
+  });
 
-  try {
-    let updatedAddress: any;
-
-    await session.withTransaction(async () => {
-      const address = await Address.findOne({
-        _id: addressId,
-        userId,
-      }).session(session);
-
-      if (!address) {
-        throw createError("Address not found", 404);
-      }
-
-      if (data.isDefault === true) {
-        await Address.updateMany(
-          { userId, isDefault: true },
-          { $set: { isDefault: false } },
-          { session }
-        );
-      }
-
-      address.set(data);
-
-      await address.save({ session });
-
-      updatedAddress = address;
-    });
-
-    return updatedAddress;
-  } finally {
-    await session.endSession();
+  if (!address) {
+    throw new ApiError(404, "Address not found");
   }
+
+  if (data.isDefault === true) {
+    await Address.updateMany(
+      { userId, isDefault: true },
+      { $set: { isDefault: false } }
+    );
+  }
+
+  address.set(data);
+  await address.save();
+
+  return address;
 }
 
 export async function setDefaultAddress(
@@ -132,41 +99,27 @@ export async function setDefaultAddress(
   addressId: string
 ) {
   if (!mongoose.isValidObjectId(addressId)) {
-    throw createError("Invalid address ID", 400);
+    throw new ApiError(400, "Invalid address ID");
   }
 
-  const session = await mongoose.startSession();
+  const target = await Address.findOne({
+    _id: addressId,
+    userId,
+  });
 
-  try {
-    let address: any;
-
-    await session.withTransaction(async () => {
-      const target = await Address.findOne({
-        _id: addressId,
-        userId,
-      }).session(session);
-
-      if (!target) {
-        throw createError("Address not found", 404);
-      }
-
-      await Address.updateMany(
-        { userId, isDefault: true },
-        { $set: { isDefault: false } },
-        { session }
-      );
-
-      target.isDefault = true;
-
-      await target.save({ session });
-
-      address = target;
-    });
-
-    return address;
-  } finally {
-    await session.endSession();
+  if (!target) {
+    throw new ApiError(404, "Address not found");
   }
+
+  await Address.updateMany(
+    { userId, isDefault: true },
+    { $set: { isDefault: false } }
+  );
+
+  target.isDefault = true;
+  await target.save();
+
+  return target;
 }
 
 export async function deleteAddress(
@@ -174,7 +127,7 @@ export async function deleteAddress(
   addressId: string
 ) {
   if (!mongoose.isValidObjectId(addressId)) {
-    throw createError("Invalid address ID", 400);
+    throw new ApiError(400, "Invalid address ID");
   }
 
   const result = await Address.deleteOne({
@@ -183,7 +136,7 @@ export async function deleteAddress(
   });
 
   if (result.deletedCount === 0) {
-    throw createError("Address not found", 404);
+    throw new ApiError(404, "Address not found");
   }
 
   return {

@@ -21,7 +21,7 @@ import {
 const router = Router();
 
 router.use(authenticate);
-router.use(authorize("customer"));
+router.use(authorize("customer", "admin", "super_admin"));
 
 router.post(
   "/",

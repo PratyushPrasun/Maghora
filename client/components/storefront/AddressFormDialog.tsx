@@ -11,19 +11,29 @@ import { Label } from "@/components/ui/label";
 import { useAddresses } from "@/hooks/useAddresses";
 import { CreateAddressPayload } from "@/services/addresses.service";
 
-const addressFormSchema = z.object({
-  recipientName: z.string().trim().min(2, "Name must be at least 2 characters"),
-  phone: z.string().trim().regex(/^\+?[0-9]{10,15}$/, "Enter a valid 10-15 digit phone number"),
-  addressLine1: z.string().trim().min(5, "Address must be at least 5 characters"),
-  addressLine2: z.string().trim().optional(),
-  landmark: z.string().trim().optional(),
-  city: z.string().trim().min(2, "City is required"),
-  state: z.string().trim().min(2, "State is required"),
-  postalCode: z.string().regex(/^[0-9]{6}$/, "Enter a valid 6-digit Indian PIN code"),
-  label: z.enum(["home", "office", "other"]),
-  customLabel: z.string().trim().optional(),
-  isDefault: z.boolean(),
-});
+const addressFormSchema = z
+  .object({
+    recipientName: z.string().trim().min(2, "Name must be at least 2 characters"),
+    phone: z.string().trim().regex(/^\+?[0-9]{10,15}$/, "Enter a valid 10-15 digit phone number"),
+    addressLine1: z.string().trim().min(5, "Address must be at least 5 characters"),
+    addressLine2: z.string().trim().optional(),
+    landmark: z.string().trim().optional(),
+    city: z.string().trim().min(2, "City is required"),
+    state: z.string().trim().min(2, "State is required"),
+    postalCode: z.string().regex(/^[0-9]{6}$/, "Enter a valid 6-digit Indian PIN code"),
+    label: z.enum(["home", "office", "other"]),
+    customLabel: z.string().trim().optional(),
+    isDefault: z.boolean(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.label === "other" && (!data.customLabel || !data.customLabel.trim())) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["customLabel"],
+        message: "Please enter a custom label for this address",
+      });
+    }
+  });
 
 type FormValues = z.infer<typeof addressFormSchema>;
 
@@ -47,8 +57,14 @@ export function AddressFormDialog({ open, onOpenChange, onSuccess }: AddressForm
     defaultValues: {
       label: "home",
       isDefault: true,
+      recipientName: "",
+      phone: "",
+      addressLine1: "",
       addressLine2: "",
       landmark: "",
+      city: "",
+      state: "",
+      postalCode: "",
       customLabel: "",
     },
   });
@@ -56,26 +72,30 @@ export function AddressFormDialog({ open, onOpenChange, onSuccess }: AddressForm
   const selectedLabel = watch("label");
 
   const onSubmit = async (values: FormValues) => {
-    const payload: CreateAddressPayload = {
-      label: values.label,
-      customLabel: values.label === "other" ? values.customLabel : undefined,
-      recipientName: values.recipientName,
-      phone: values.phone,
-      addressLine1: values.addressLine1,
-      addressLine2: values.addressLine2 || "",
-      landmark: values.landmark || "",
-      city: values.city,
-      state: values.state,
-      postalCode: values.postalCode,
-      country: "India",
-      isDefault: values.isDefault,
-    };
+    try {
+      const payload: CreateAddressPayload = {
+        label: values.label,
+        customLabel: values.label === "other" && values.customLabel ? values.customLabel.trim() : undefined,
+        recipientName: values.recipientName.trim(),
+        phone: values.phone.trim(),
+        addressLine1: values.addressLine1.trim(),
+        addressLine2: values.addressLine2?.trim() || "",
+        landmark: values.landmark?.trim() || "",
+        city: values.city.trim(),
+        state: values.state.trim(),
+        postalCode: values.postalCode.trim(),
+        country: "India",
+        isDefault: Boolean(values.isDefault),
+      };
 
-    const newAddress = await createAddress(payload);
-    reset();
-    onOpenChange(false);
-    if (onSuccess && newAddress?._id) {
-      onSuccess(newAddress._id);
+      const newAddress = await createAddress(payload);
+      reset();
+      onOpenChange(false);
+      if (onSuccess && newAddress?._id) {
+        onSuccess(newAddress._id);
+      }
+    } catch {
+      // Error is caught and surfaced via toast in useAddresses hook
     }
   };
 
@@ -87,7 +107,7 @@ export function AddressFormDialog({ open, onOpenChange, onSuccess }: AddressForm
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs">Full Name *</Label>
               <Input
@@ -115,7 +135,15 @@ export function AddressFormDialog({ open, onOpenChange, onSuccess }: AddressForm
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <Label className="text-xs">Apartment, Suite, Unit (Optional)</Label>
+            <Input
+              {...register("addressLine2")}
+              placeholder="Apartment, unit, floor, building, etc."
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs">Area / Landmark</Label>
               <Input {...register("landmark")} placeholder="Near Central Park" />
@@ -130,7 +158,7 @@ export function AddressFormDialog({ open, onOpenChange, onSuccess }: AddressForm
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label className="text-xs">City *</Label>
               <Input
@@ -183,6 +211,17 @@ export function AddressFormDialog({ open, onOpenChange, onSuccess }: AddressForm
               />
             </div>
           )}
+
+          <div className="pt-1">
+            <label className="flex items-center gap-2 cursor-pointer text-xs text-foreground select-none">
+              <input
+                type="checkbox"
+                {...register("isDefault")}
+                className="h-4 w-4 rounded border-input text-primary focus:ring-primary cursor-pointer"
+              />
+              <span className="font-medium">Make this my default delivery address</span>
+            </label>
+          </div>
 
           <DialogFooter>
             <Button

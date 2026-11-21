@@ -31,7 +31,7 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -62,7 +62,7 @@ export function DialogContent({
       exit={{ opacity: 0, scale: 0.95, y: 10 }}
       transition={{ duration: 0.2 }}
       className={cn(
-        "relative mx-auto w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-xl",
+        "relative mx-auto w-full max-w-lg rounded-2xl border border-border bg-card p-4 sm:p-6 shadow-xl",
         className
       )}
     >

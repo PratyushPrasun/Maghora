@@ -65,7 +65,7 @@ export function FinalCTA() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs text-[#F7F0E3]/80 pt-2">
           <div className="flex items-center justify-center gap-2">
             <Leaf className="h-4 w-4 text-[#C49A50]" />
-            <span>100% Olive Oil Roast</span>
+            <span>Olive Oil</span>
           </div>
           <div className="flex items-center justify-center gap-2">
             <ShieldCheck className="h-4 w-4 text-[#C49A50]" />
