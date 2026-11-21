@@ -11,7 +11,7 @@ import { HashScrollHandler } from "@/components/storefront/HashScrollHandler";
 export const metadata: Metadata = {
   title: "Maghora | Premium Roasted Makhana from Mithila, Bihar",
   description:
-    "Discover Maghora: Artisanal flavoured makhana slow-roasted in 100% extra virgin olive oil. Sourced directly from certified wetland farmers in Mithila, Bihar.",
+    "Discover Maghora: Artisanal flavoured makhana slow-roasted in Olive Oil. Sourced directly from certified wetland farmers in Mithila, Bihar.",
   alternates: {
     canonical: "/",
   },

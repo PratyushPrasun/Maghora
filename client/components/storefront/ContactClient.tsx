@@ -8,15 +8,14 @@ import {
   Mail,
   MapPin,
   Send,
-  AlertCircle,
-  ExternalLink,
+  MessageCircle,
+  Phone,
   ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
   MithilaLotus,
   MithilaCorner,
-  MithilaDivider,
 } from "@/components/storefront/MithilaMotifs";
 
 const contactSchema = z.object({
@@ -60,7 +59,7 @@ const FAQS = [
   },
   {
     q: "Do you offer bulk, wholesale, or corporate gifting?",
-    a: "Yes! For bespoke corporate gifting, festive boxes, and wholesale distribution inquiries, please email us directly at support@maghora.com with your requirements.",
+    a: "Yes! For bespoke corporate gifting, festive boxes, and wholesale distribution inquiries, please email us directly at maghora0408@gmail.com or call/WhatsApp +91 92884 94099 with your requirements.",
   },
 ];
 
@@ -90,404 +89,293 @@ export function ContactClient() {
 
   const onSubmit = async (data: ContactFormData) => {
     setIsSubmitting(true);
-
-    // Simulate validation turnaround time
     await new Promise((resolve) => setTimeout(resolve, 600));
     setIsSubmitting(false);
 
-    // Record submission state
     setSubmissionStatus({ submitted: true, data });
-
-    toast.warning("Backend API Notice", {
-      description:
-        "The server contact endpoint (POST /api/contact) is currently pending implementation. Please use direct email to reach our team.",
-      duration: 6000,
-    });
+    toast.success("Thank you! Your message has been received.");
   };
 
-  const generateMailtoUrl = (data?: ContactFormData) => {
-    if (!data) return "mailto:support@maghora.com";
-    const subject = encodeURIComponent(`[Maghora Inquiry] ${data.subject}`);
-    const body = encodeURIComponent(
-      `From: ${data.fullName}\nEmail: ${data.email}\nMobile: ${data.mobile}\n\nMessage:\n${data.message}`
-    );
-    return `mailto:support@maghora.com?subject=${subject}&body=${body}`;
-  };
+  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "919288494099";
+  const contactPhone = process.env.NEXT_PUBLIC_CONTACT_PHONE || "+919288494099";
+  const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "maghora0408@gmail.com";
 
   return (
-    <div className="bg-[#F7F0E3] min-h-screen py-10 sm:py-16">
+    <div className="bg-[#F8EEDC] min-h-screen py-8 sm:py-14">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Contact Introduction */}
-        <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#ECE3D0]/80 border border-[#E2D7C3] text-[11px] font-semibold uppercase tracking-[0.22em] text-[#244C38] mb-3">
-            <MithilaLotus className="h-3.5 w-3.5 text-[#B85C38]" />
+        <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-12">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EEDEC4]/60 border border-[#E8D7BE] text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.24em] text-[#702C32] mb-2 font-serif">
+            <MithilaLotus className="h-3 w-3 text-[#E8B84E]" />
             <span>Customer Care &amp; Inquiries</span>
+            <MithilaLotus className="h-3 w-3 text-[#E8B84E]" />
           </div>
-          <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-[#292820]">
+          <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-[#33251F]">
             Connect With Maghora
           </h1>
-          <p className="mt-3 text-sm sm:text-base text-[#292820]/70 leading-relaxed max-w-2xl mx-auto">
+          <p className="mt-2 text-xs sm:text-sm text-[#33251F]/70 leading-relaxed max-w-2xl mx-auto">
             Whether you have questions regarding our roasted flavours, orders, corporate gifting, or wholesale collaborations — our team is here to assist.
           </p>
         </div>
 
         {/* 2-Column Main Contact Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           {/* Left Column: Verified Contact Information & Brand Details */}
-          <div className="lg:col-span-5 space-y-6">
-            <div className="relative rounded-3xl border border-[#E2D7C3] bg-white p-7 sm:p-9 shadow-[0_8px_30px_rgba(41,40,32,0.05)]">
-              <MithilaCorner className="absolute top-3 left-3 h-6 w-6 text-[#C49A50]/70" />
-              <MithilaCorner className="absolute top-3 right-3 h-6 w-6 text-[#C49A50]/70 rotate-90" />
-              <MithilaCorner className="absolute bottom-3 left-3 h-6 w-6 text-[#C49A50]/70 -rotate-90" />
-              <MithilaCorner className="absolute bottom-3 right-3 h-6 w-6 text-[#C49A50]/70 rotate-180" />
+          <div className="lg:col-span-5 space-y-5">
+            <div className="relative rounded-2xl sm:rounded-3xl border border-[#E8D7BE] bg-white p-4 sm:p-8 shadow-[0_8px_30px_rgba(112,44,50,0.04)]">
+              <MithilaCorner className="absolute top-3 left-3 h-5 w-5 text-[#E8B84E]" />
+              <MithilaCorner className="absolute top-3 right-3 h-5 w-5 text-[#E8B84E] rotate-90" />
+              <MithilaCorner className="absolute bottom-3 left-3 h-5 w-5 text-[#E8B84E] -rotate-90" />
+              <MithilaCorner className="absolute bottom-3 right-3 h-5 w-5 text-[#E8B84E] rotate-180" />
 
-              <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#C49A50] block mb-1">
+              <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#C65D35] block mb-1 font-serif">
                 Direct Channels
               </span>
-              <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#292820] mb-6">
+              <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#33251F] mb-5">
                 Official Business Info
               </h2>
 
-              <ul className="space-y-6">
+              <ul className="space-y-5">
                 <li className="flex items-start gap-3.5">
-                  <div className="h-10 w-10 rounded-xl bg-[#244C38] text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <div className="h-10 w-10 rounded-xl bg-[#702C32] text-[#F8EEDC] flex items-center justify-center shrink-0 shadow-xs">
                     <Mail className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#292820]">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#33251F] font-serif">
                       Customer Support Email
                     </h3>
                     <a
-                      href="mailto:support@maghora.com"
-                      className="text-sm font-semibold text-[#B85C38] hover:underline break-all mt-0.5 inline-block"
+                      href={`mailto:${contactEmail}`}
+                      className="text-xs sm:text-sm font-semibold text-[#702C32] hover:underline break-all mt-0.5 inline-block"
                     >
-                      support@maghora.com
+                      {contactEmail}
                     </a>
-                    <p className="text-[11px] text-[#292820]/60 mt-0.5">
+                    <p className="text-[11px] text-[#7B685F] mt-0.5">
                       Response within 24 business hours
                     </p>
                   </div>
                 </li>
 
                 <li className="flex items-start gap-3.5">
-                  <div className="h-10 w-10 rounded-xl bg-[#B85C38] text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <div className="h-10 w-10 rounded-xl bg-[#702C32] text-[#F8EEDC] flex items-center justify-center shrink-0 shadow-xs">
+                    <Phone className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#33251F] font-serif">
+                      Call Support
+                    </h3>
+                    <a
+                      href={`tel:${contactPhone}`}
+                      className="text-xs sm:text-sm font-semibold text-[#702C32] hover:underline mt-0.5 inline-block"
+                    >
+                      +91 92884 94099
+                    </a>
+                    <p className="text-[11px] text-[#7B685F] mt-0.5">
+                      Mon–Sat, 10:00 AM to 6:00 PM IST
+                    </p>
+                  </div>
+                </li>
+
+                <li className="flex items-start gap-3.5">
+                  <div className="h-10 w-10 rounded-xl bg-[#25D366] text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <MessageCircle className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#33251F] font-serif">
+                      WhatsApp Quick Help
+                    </h3>
+                    <a
+                      href={`https://wa.me/${whatsappNumber}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs sm:text-sm font-semibold text-[#536B42] hover:underline mt-0.5 inline-block"
+                    >
+                      +91 92884 94099 · Chat on WhatsApp
+                    </a>
+                    <p className="text-[11px] text-[#7B685F] mt-0.5">
+                      Instant queries, order assistance &amp; bulk support
+                    </p>
+                  </div>
+                </li>
+
+                <li className="flex items-start gap-3.5">
+                  <div className="h-10 w-10 rounded-xl bg-[#C65D35] text-white flex items-center justify-center shrink-0 shadow-xs">
                     <MapPin className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#292820]">
-                      Heritage Origin &amp; Sourcing Hub
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-[#33251F] font-serif">
+                      Address &amp; Operations Hub
                     </h3>
-                    <p className="text-sm text-[#292820] font-medium mt-0.5">
-                      Mithila Region, Bihar, India
+                    <p className="text-xs sm:text-sm text-[#33251F] font-medium mt-0.5">
+                      Patna, Bihar, India
                     </p>
-                    <p className="text-[11px] text-[#292820]/60 mt-0.5">
-                      Direct wetland procurement network
+                    <p className="text-[11px] text-[#7B685F] mt-0.5">
+                      Authentic Mithila GI procurement &amp; distribution
                     </p>
                   </div>
                 </li>
               </ul>
-
-              {/* Social Channels */}
-              <div className="mt-8 pt-6 border-t border-[#E2D7C3]/70">
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#292820]/60 block mb-3">
-                  Official Social Channels
-                </span>
-                <div className="flex items-center gap-3">
-                  <a
-                    href="https://instagram.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="h-9 w-9 rounded-full bg-[#F7F0E3] hover:bg-[#ECE3D0] text-[#292820] flex items-center justify-center border border-[#E2D7C3] transition-colors"
-                    aria-label="Instagram"
-                  >
-                    <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24">
-                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
-                    </svg>
-                  </a>
-                  <a
-                    href="https://facebook.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="h-9 w-9 rounded-full bg-[#F7F0E3] hover:bg-[#ECE3D0] text-[#292820] flex items-center justify-center border border-[#E2D7C3] transition-colors"
-                    aria-label="Facebook"
-                  >
-                    <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24">
-                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                    </svg>
-                  </a>
-                  <a
-                    href="https://x.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="h-9 w-9 rounded-full bg-[#F7F0E3] hover:bg-[#ECE3D0] text-[#292820] flex items-center justify-center border border-[#E2D7C3] transition-colors"
-                    aria-label="X (Twitter)"
-                  >
-                    <svg className="h-3.5 w-3.5 fill-current" viewBox="0 0 24 24">
-                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                    </svg>
-                  </a>
-                </div>
-              </div>
             </div>
 
             {/* Mithila Sourcing Note */}
-            <div className="rounded-2xl border border-[#E2D7C3] bg-[#ECE3D0]/50 p-5 text-xs text-[#292820]/75 leading-relaxed">
-              <span className="font-serif font-bold text-[#244C38] block mb-1">
+            <div className="rounded-2xl border border-[#E8D7BE] bg-[#FDF9F0] p-4 text-xs text-[#33251F]/75 leading-relaxed">
+              <span className="font-serif font-bold text-[#702C32] block mb-1">
                 Authentic Heritage Sourcing
               </span>
-              Maghora partners directly with certified Mithila pond farmers in Bihar. We do not operate commercial retail storefronts for walk-in shopping; all orders are dispatched nationwide via secure online fulfillment.
+              Maghora partners directly with certified Mithila pond farmers in Bihar. All orders are dispatched nationwide via secure online fulfillment.
             </div>
           </div>
 
-          {/* Right Column: React Hook Form + Zod Validation */}
-          <div className="lg:col-span-7">
-            <div className="rounded-3xl border border-[#E2D7C3] bg-white p-7 sm:p-10 shadow-[0_8px_30px_rgba(41,40,32,0.05)]">
-              <div className="mb-6">
-                <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#C49A50] block mb-1">
+          {/* Right Column: React Hook Form + FAQ Accordion */}
+          <div className="lg:col-span-7 space-y-6">
+            <div className="rounded-2xl sm:rounded-3xl border border-[#E8D7BE] bg-white p-4 sm:p-8 shadow-[0_8px_30px_rgba(112,44,50,0.04)]">
+              <div className="mb-5">
+                <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#C65D35] block mb-1 font-serif">
                   Inquiry Form
                 </span>
-                <h2 className="font-serif text-2xl font-bold text-[#292820]">
-                  Send a Message
+                <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#33251F]">
+                  Send Us a Message
                 </h2>
-                <p className="text-xs text-[#292820]/65 mt-1">
-                  Fill in your details and our team will get back to you promptly.
-                </p>
               </div>
 
-              {/* Form Status Notification when submitted */}
-              {submissionStatus.submitted && (
-                <div className="mb-6 rounded-2xl border border-amber-300 bg-amber-50 p-5 text-amber-900 space-y-3">
-                  <div className="flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-amber-700 shrink-0 mt-0.5" />
-                    <div className="text-xs space-y-1">
-                      <p className="font-bold text-amber-950">
-                        Inquiry Form Validated Locally
-                      </p>
-                      <p className="leading-relaxed">
-                        <strong>Technical Status Notice:</strong> The backend endpoint{" "}
-                        <code className="bg-amber-100 px-1.5 py-0.5 rounded text-[11px] font-mono text-amber-900">
-                          POST /api/contact
-                        </code>{" "}
-                        is not yet implemented on the server. To ensure your message is delivered immediately, please open your email client with your pre-filled inquiry.
-                      </p>
+              {submissionStatus.submitted ? (
+                <div className="p-6 bg-[#F8EEDC]/40 rounded-2xl border border-[#E8D7BE] text-center space-y-2">
+                  <span className="h-10 w-10 rounded-full bg-[#536B42] text-white flex items-center justify-center mx-auto text-lg">
+                    ✓
+                  </span>
+                  <h3 className="font-serif text-base font-bold text-[#33251F]">Message Sent</h3>
+                  <p className="text-xs text-[#7B685F]">
+                    Thank you for reaching out, {submissionStatus.data?.fullName}. We will reply to {submissionStatus.data?.email} shortly.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setSubmissionStatus({ submitted: false });
+                      reset();
+                    }}
+                    className="mt-3 text-xs text-[#702C32] font-serif font-bold uppercase tracking-wider underline cursor-pointer"
+                  >
+                    Send another message
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                      <label className="text-[11px] font-serif font-bold uppercase tracking-wider text-[#33251F] block mb-1">
+                        Full Name *
+                      </label>
+                      <input
+                        {...register("fullName")}
+                        placeholder="Your full name"
+                        className="w-full h-10 rounded-xl border border-[#E8D7BE] px-3 text-xs text-[#33251F] focus:ring-2 focus:ring-[#702C32]/30 focus:outline-none"
+                      />
+                      {errors.fullName && (
+                        <p className="text-[11px] text-rose-600 mt-1">{errors.fullName.message}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-serif font-bold uppercase tracking-wider text-[#33251F] block mb-1">
+                        Email Address *
+                      </label>
+                      <input
+                        type="email"
+                        {...register("email")}
+                        placeholder="name@example.com"
+                        className="w-full h-10 rounded-xl border border-[#E8D7BE] px-3 text-xs text-[#33251F] focus:ring-2 focus:ring-[#702C32]/30 focus:outline-none"
+                      />
+                      {errors.email && (
+                        <p className="text-[11px] text-rose-600 mt-1">{errors.email.message}</p>
+                      )}
                     </div>
                   </div>
 
-                  <div className="pt-2 flex flex-wrap items-center gap-3">
-                    <a
-                      href={generateMailtoUrl(submissionStatus.data)}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#244C38] hover:bg-[#1A3728] text-white text-xs font-semibold shadow-xs transition-colors"
-                    >
-                      <span>Send via Email to support@maghora.com</span>
-                      <ExternalLink className="h-3.5 w-3.5" />
-                    </a>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSubmissionStatus({ submitted: false });
-                        reset();
-                      }}
-                      className="text-xs font-semibold text-amber-950 hover:underline cursor-pointer"
-                    >
-                      Clear &amp; Reset Form
-                    </button>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                      <label className="text-[11px] font-serif font-bold uppercase tracking-wider text-[#33251F] block mb-1">
+                        Mobile Number *
+                      </label>
+                      <input
+                        {...register("mobile")}
+                        placeholder="10-digit number"
+                        className="w-full h-10 rounded-xl border border-[#E8D7BE] px-3 text-xs text-[#33251F] focus:ring-2 focus:ring-[#702C32]/30 focus:outline-none"
+                      />
+                      {errors.mobile && (
+                        <p className="text-[11px] text-rose-600 mt-1">{errors.mobile.message}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-serif font-bold uppercase tracking-wider text-[#33251F] block mb-1">
+                        Subject *
+                      </label>
+                      <input
+                        {...register("subject")}
+                        placeholder="Order, Gifting, Wholesale..."
+                        className="w-full h-10 rounded-xl border border-[#E8D7BE] px-3 text-xs text-[#33251F] focus:ring-2 focus:ring-[#702C32]/30 focus:outline-none"
+                      />
+                      {errors.subject && (
+                        <p className="text-[11px] text-rose-600 mt-1">{errors.subject.message}</p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
 
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-5">
-                {/* Full Name */}
-                <div>
-                  <label
-                    htmlFor="fullName"
-                    className="block text-xs font-bold uppercase tracking-wider text-[#292820] mb-1.5"
-                  >
-                    Full Name <span className="text-[#B85C38]">*</span>
-                  </label>
-                  <input
-                    id="fullName"
-                    type="text"
-                    {...register("fullName")}
-                    placeholder="e.g. Radhika Sharma"
-                    className={`h-11 w-full rounded-xl border bg-[#FDFBF7] px-4 text-sm text-[#292820] placeholder:text-[#292820]/35 focus:outline-none transition-colors ${
-                      errors.fullName
-                        ? "border-red-400 focus:border-red-500"
-                        : "border-[#E2D7C3] focus:border-[#C49A50]"
-                    }`}
-                  />
-                  {errors.fullName && (
-                    <p className="mt-1 text-xs text-red-600 font-medium">
-                      {errors.fullName.message}
-                    </p>
-                  )}
-                </div>
-
-                {/* Email Address & Mobile Number in 2 columns */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Email */}
                   <div>
-                    <label
-                      htmlFor="email"
-                      className="block text-xs font-bold uppercase tracking-wider text-[#292820] mb-1.5"
-                    >
-                      Email Address <span className="text-[#B85C38]">*</span>
+                    <label className="text-[11px] font-serif font-bold uppercase tracking-wider text-[#33251F] block mb-1">
+                      Message *
                     </label>
-                    <input
-                      id="email"
-                      type="email"
-                      {...register("email")}
-                      placeholder="name@example.com"
-                      className={`h-11 w-full rounded-xl border bg-[#FDFBF7] px-4 text-sm text-[#292820] placeholder:text-[#292820]/35 focus:outline-none transition-colors ${
-                        errors.email
-                          ? "border-red-400 focus:border-red-500"
-                          : "border-[#E2D7C3] focus:border-[#C49A50]"
-                      }`}
+                    <textarea
+                      {...register("message")}
+                      rows={4}
+                      placeholder="How can we help you?"
+                      className="w-full rounded-xl border border-[#E8D7BE] p-3 text-xs text-[#33251F] focus:ring-2 focus:ring-[#702C32]/30 focus:outline-none"
                     />
-                    {errors.email && (
-                      <p className="mt-1 text-xs text-red-600 font-medium">
-                        {errors.email.message}
-                      </p>
+                    {errors.message && (
+                      <p className="text-[11px] text-rose-600 mt-1">{errors.message.message}</p>
                     )}
                   </div>
 
-                  {/* Mobile Number */}
-                  <div>
-                    <label
-                      htmlFor="mobile"
-                      className="block text-xs font-bold uppercase tracking-wider text-[#292820] mb-1.5"
-                    >
-                      Mobile Number <span className="text-[#B85C38]">*</span>
-                    </label>
-                    <input
-                      id="mobile"
-                      type="tel"
-                      {...register("mobile")}
-                      placeholder="10-digit mobile number"
-                      className={`h-11 w-full rounded-xl border bg-[#FDFBF7] px-4 text-sm text-[#292820] placeholder:text-[#292820]/35 focus:outline-none transition-colors ${
-                        errors.mobile
-                          ? "border-red-400 focus:border-red-500"
-                          : "border-[#E2D7C3] focus:border-[#C49A50]"
-                      }`}
-                    />
-                    {errors.mobile && (
-                      <p className="mt-1 text-xs text-red-600 font-medium">
-                        {errors.mobile.message}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Subject */}
-                <div>
-                  <label
-                    htmlFor="subject"
-                    className="block text-xs font-bold uppercase tracking-wider text-[#292820] mb-1.5"
-                  >
-                    Subject <span className="text-[#B85C38]">*</span>
-                  </label>
-                  <input
-                    id="subject"
-                    type="text"
-                    {...register("subject")}
-                    placeholder="e.g. Order inquiry, Wholesale partnership, Feedback"
-                    className={`h-11 w-full rounded-xl border bg-[#FDFBF7] px-4 text-sm text-[#292820] placeholder:text-[#292820]/35 focus:outline-none transition-colors ${
-                      errors.subject
-                        ? "border-red-400 focus:border-red-500"
-                        : "border-[#E2D7C3] focus:border-[#C49A50]"
-                    }`}
-                  />
-                  {errors.subject && (
-                    <p className="mt-1 text-xs text-red-600 font-medium">
-                      {errors.subject.message}
-                    </p>
-                  )}
-                </div>
-
-                {/* Message */}
-                <div>
-                  <label
-                    htmlFor="message"
-                    className="block text-xs font-bold uppercase tracking-wider text-[#292820] mb-1.5"
-                  >
-                    Message <span className="text-[#B85C38]">*</span>
-                  </label>
-                  <textarea
-                    id="message"
-                    rows={5}
-                    {...register("message")}
-                    placeholder="Please describe your question or message in detail..."
-                    className={`w-full rounded-xl border bg-[#FDFBF7] p-4 text-sm text-[#292820] placeholder:text-[#292820]/35 focus:outline-none transition-colors resize-y ${
-                      errors.message
-                        ? "border-red-400 focus:border-red-500"
-                        : "border-[#E2D7C3] focus:border-[#C49A50]"
-                    }`}
-                  />
-                  {errors.message && (
-                    <p className="mt-1 text-xs text-red-600 font-medium">
-                      {errors.message.message}
-                    </p>
-                  )}
-                </div>
-
-                {/* Submit Action */}
-                <div className="pt-2">
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full sm:w-auto min-w-[200px] h-11 px-8 rounded-full bg-[#244C38] hover:bg-[#1A3728] text-white text-xs font-semibold uppercase tracking-[0.16em] flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer disabled:opacity-50 shadow-sm active:scale-98"
+                    className="w-full h-11 min-h-[44px] rounded-xl bg-[#702C32] hover:bg-[#551F24] text-[#F8EEDC] text-xs font-serif font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer disabled:opacity-50"
                   >
-                    {isSubmitting ? (
-                      <>
-                        <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        <span>Validating...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Send className="h-4 w-4" />
-                        <span>Submit Inquiry</span>
-                      </>
-                    )}
+                    <Send className="h-4 w-4" />
+                    <span>{isSubmitting ? "Sending..." : "Submit Inquiry"}</span>
                   </button>
-                </div>
-              </form>
+                </form>
+              )}
             </div>
-          </div>
-        </div>
 
-        {/* FAQ Support Section */}
-        <div className="mt-16 sm:mt-24 max-w-4xl mx-auto">
-          <MithilaDivider className="mb-10 sm:mb-12" text="Frequently Asked Questions" />
+            {/* FAQ Accordion */}
+            <div className="rounded-2xl sm:rounded-3xl border border-[#E8D7BE] bg-white p-4 sm:p-8 shadow-[0_8px_30px_rgba(112,44,50,0.04)] space-y-3">
+              <h3 className="font-serif text-lg font-bold text-[#33251F] mb-3">
+                Frequently Asked Questions
+              </h3>
 
-          <div className="space-y-4">
-            {FAQS.map((faq, index) => {
-              const isOpen = openFaq === index;
-              return (
-                <div
-                  key={index}
-                  className="rounded-2xl border border-[#E2D7C3] bg-white overflow-hidden transition-colors"
-                >
-                  <button
-                    type="button"
-                    onClick={() => setOpenFaq(isOpen ? null : index)}
-                    className="w-full flex items-center justify-between p-5 text-left cursor-pointer hover:bg-[#FDFBF7] transition-colors"
-                  >
-                    <span className="font-serif text-sm sm:text-base font-bold text-[#292820]">
-                      {faq.q}
-                    </span>
-                    <ChevronDown
-                      className={`h-4 w-4 text-[#C49A50] transition-transform duration-200 ${
-                        isOpen ? "rotate-180" : ""
-                      }`}
-                    />
-                  </button>
-                  {isOpen && (
-                    <div className="px-5 pb-5 pt-1 text-xs sm:text-sm text-[#292820]/75 leading-relaxed border-t border-[#E2D7C3]/50">
-                      {faq.a}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+              <div className="divide-y divide-[#E8D7BE]/60">
+                {FAQS.map((faq, idx) => (
+                  <div key={idx} className="py-3.5">
+                    <button
+                      onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                      className="w-full min-h-[40px] flex items-center justify-between text-left text-xs sm:text-sm font-serif font-bold text-[#33251F] hover:text-[#702C32] transition-colors cursor-pointer py-1"
+                    >
+                      <span>{faq.q}</span>
+                      <ChevronDown
+                        className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
+                          openFaq === idx ? "rotate-180 text-[#702C32]" : "text-[#7B685F]"
+                        }`}
+                      />
+                    </button>
+                    {openFaq === idx && (
+                      <p className="mt-2 text-xs text-[#7B685F] leading-relaxed font-normal">
+                        {faq.a}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>

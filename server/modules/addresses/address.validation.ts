@@ -43,7 +43,7 @@ export const createAddressSchema = z.object(
     });
   }
 
-  if (data.label !== "other" && data.customLabel) {
+  if (data.label !== "other" && data.customLabel && data.customLabel.trim()) {
     ctx.addIssue({
       code: "custom",
       path: ["customLabel"],

@@ -158,7 +158,7 @@ export function HeroCampaign() {
                   Cooking Medium
                 </span>
                 <span className="text-xs sm:text-sm font-bold text-[#292820]">
-                  100% Olive Oil
+                  Olive Oil
                 </span>
                 <span className="text-[10px] text-[#6E685C]">Zero Palm Oil</span>
               </div>
