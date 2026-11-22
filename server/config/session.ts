@@ -17,7 +17,7 @@ export const sessionMiddleware = session({
   }),
 
   secret: env.SESSION_SECRET,
-  proxy: true
+  proxy: true,
   resave: false,
   saveUninitialized: false,
 
