@@ -21,11 +21,11 @@ export const sessionMiddleware = session({
   resave: false,
   saveUninitialized: false,
 
-  cookie: {
-    httpOnly: true,
-    secure: env.NODE_ENV === "production",
-    sameSite: env.NODE_ENV === "production" ? "none" : "lax",
-    maxAge: SESSION_DURATION,
-    path: "/",
-  },
+ cookie: {
+  httpOnly: true,
+  secure: true,
+  sameSite: "none",
+  maxAge: SESSION_DURATION,
+  path: "/",
+},
 });
