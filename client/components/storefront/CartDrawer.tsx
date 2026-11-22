@@ -98,7 +98,7 @@ export function CartDrawer() {
                       Your basket is empty
                     </h3>
                     <p className="text-xs text-[#7B685F] mb-6 max-w-xs">
-                      Discover our artisanal roasted makhana flavours.
+                      Ancient Roots, Modern Taste — explore our flavours.
                     </p>
                     <Link href="/products" onClick={closeCart} className="w-full">
                       <Button className="w-full bg-[#702C32] hover:bg-[#551F24] text-[#F8EEDC] rounded-xl text-xs font-serif font-bold uppercase tracking-wider" variant="default">

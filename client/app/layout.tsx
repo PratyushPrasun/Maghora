@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   ],
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   openGraph: {
-    title: "Maghora | Premium Flavoured Makhana",
+    title: "Maghora | Ancient Roots, Modern Taste",
     description: "Slow roasted in pure olive oil. Gourmet snacking reinvented.",
     siteName: "Maghora",
     images: [
