@@ -37,7 +37,7 @@ export function BrandStatement() {
                   MAGHORA
                 </h1>
                 <span className="text-[9px] sm:text-xs font-serif font-bold uppercase tracking-[0.18em] sm:tracking-[0.24em] text-[#C65D35]">
-                  Artisanal Roasted Makhana
+                  Ancient Roots, Modern Taste
                 </span>
               </div>
 

@@ -40,7 +40,7 @@ export function Footer() {
   };
 
   const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "919288494099";
-  const contactPhone = process.env.NEXT_PUBLIC_CONTACT_PHONE || "+919288494099";
+  const contactPhone = process.env.NEXT_PUBLIC_CONTACT_PHONE || "+918893932380";
   const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "maghora0408@gmail.com";
 
   return (
@@ -92,7 +92,7 @@ export function Footer() {
                   MAGHORA
                 </span>
                 <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.24em] text-[#E8B84E] mt-1 block font-serif">
-                  Mithila Heritage Makhana
+                  Ancient Roots, Modern Taste
                 </span>
               </div>
             </Link>
@@ -180,7 +180,7 @@ export function Footer() {
                   href={`tel:${contactPhone}`}
                   className="hover:text-[#E8B84E] transition-colors py-0.5 inline-block"
                 >
-                  +91 92884 94099
+                  +91 88939 32380
                 </a>
               </li>
               <li className="flex items-center gap-2.5">

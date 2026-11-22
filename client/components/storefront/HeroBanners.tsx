@@ -116,16 +116,16 @@ export function HeroBanners() {
   return (
     <section
       id="hero-carousel"
-      className="bg-[#F8EEDC] pt-1.5 sm:pt-4 pb-3 sm:pb-6 select-none relative overflow-hidden"
+      className="bg-[#F8EEDC] pt-0 sm:pt-4 pb-2 sm:pb-6 select-none relative overflow-hidden"
       aria-label="Maghora Hero Campaign Showcase"
     >
-      <div className="mx-auto max-w-7xl px-2.5 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-0 sm:px-6 lg:px-8">
         {/*
           Banner Stage: Preserves true native aspect ratio of the 2880x960 campaign visuals,
           with responsive container geometry so no text or packaging is obscured or distorted.
         */}
         <div
-          className="relative w-full aspect-[2.85/1] sm:aspect-[2.9/1] lg:aspect-[3/1] min-h-[115px] sm:min-h-[240px] lg:min-h-[380px] rounded-xl sm:rounded-3xl overflow-hidden shadow-[0_8px_30px_rgba(51,37,31,0.06)] sm:shadow-[0_12px_40px_rgba(51,37,31,0.08)] border border-[#E8D7BE] bg-[#EEDEC4] group transition-all duration-300"
+          className="relative w-full aspect-[2.65/1] sm:aspect-[2.75/1] lg:aspect-[2.85/1] min-h-[145px] sm:min-h-[270px] lg:min-h-[420px] rounded-none sm:rounded-3xl overflow-hidden shadow-[0_8px_30px_rgba(51,37,31,0.06)] sm:shadow-[0_12px_40px_rgba(51,37,31,0.08)] border-y sm:border border-[#E8D7BE] bg-[#EEDEC4] group transition-all duration-300"
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
           onTouchStart={handleTouchStart}

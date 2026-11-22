@@ -13,7 +13,7 @@ import {
 import { ArrowRight, ShieldCheck, Heart, Sparkles } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "About Us | Maghora — Traditional Mithila Roots, Modern Premium Food",
+  title: "About Us | Maghora — Ancient Roots, Modern Taste",
   description:
     "Discover the story of Maghora: From the tranquil freshwater pokhars of Mithila, Bihar to artisanal makhana slow-roasted in 100% extra virgin olive oil.",
   alternates: {
@@ -30,7 +30,7 @@ export default function AboutPage() {
         className="w-full relative overflow-hidden bg-[#EEDEC4]"
         aria-label="About Maghora Banner"
       >
-        <div className="relative w-full aspect-[2.7/1] sm:aspect-[2.75/1] md:aspect-[2.81/1] min-h-[115px] sm:min-h-[260px] lg:min-h-[460px]">
+        <div className="relative w-full aspect-[2.55/1] sm:aspect-[2.65/1] md:aspect-[2.75/1] min-h-[145px] sm:min-h-[290px] lg:min-h-[490px]">
           <Image
             src="/banner4.png"
             alt="Maghora — Bihar's Super Snack, Reimagined. Ancient wetland roots, modern taste"

@@ -243,13 +243,13 @@ export function Navbar() {
                 aria-label="Maghora — Return to home"
               >
                 {/* Strict 1:1 original aspect ratio with tight bounding box (no dead transparent padding) */}
-                <div className="relative h-9 w-9 sm:h-11 sm:w-11 lg:h-[54px] lg:w-[54px] shrink-0 aspect-square">
+                <div className="relative h-[42px] w-[42px] sm:h-11 sm:w-11 lg:h-[54px] lg:w-[54px] shrink-0 aspect-square">
                   <Image
                     src="/logo-mark.png"
                     alt="Maghora — Traditional Mithila Heritage Foods"
                     fill
                     priority
-                    sizes="(max-width: 640px) 36px, (max-width: 1024px) 44px, 54px"
+                    sizes="(max-width: 640px) 42px, (max-width: 1024px) 44px, 54px"
                     className="object-contain drop-shadow-[0_2px_8px_rgba(112,44,50,0.12)] select-none transition-transform duration-300 group-hover:scale-105"
                   />
                 </div>
@@ -573,7 +573,7 @@ export function Navbar() {
                     onClick={handleHomeClick}
                     className="flex items-center gap-2.5 cursor-pointer"
                   >
-                    <div className="relative h-10 w-10 shrink-0 aspect-square">
+                    <div className="relative h-11 w-11 shrink-0 aspect-square">
                       <Image
                         src="/logo-mark.png"
                         alt="Maghora"
@@ -585,8 +585,8 @@ export function Navbar() {
                       <span className="font-serif font-extrabold text-base text-[#702C32] tracking-[0.16em] block leading-none">
                         MAGHORA
                       </span>
-                      <span className="text-[9px] uppercase tracking-[0.24em] text-[#C65D35] font-semibold">
-                        Mithila Makhana
+                      <span className="text-[9px] uppercase tracking-[0.22em] text-[#C65D35] font-semibold">
+                        Ancient Roots, Modern Taste
                       </span>
                     </div>
                   </Link>
