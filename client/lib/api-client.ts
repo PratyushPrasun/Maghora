@@ -21,12 +21,24 @@ export const apiClient: AxiosInstance = axios.create({
   withCredentials: true, // Required for session cookie maghora.sid
   headers: {
     "Content-Type": "application/json",
+    "X-Requested-With": "XMLHttpRequest", // CSRF protection: marks as AJAX request
   },
 });
+
+// ---------- Retry configuration ----------
+const MAX_RETRIES = 2;
+const RETRY_DELAY_MS = 1000;
+const RETRYABLE_STATUS_CODES = new Set([408, 429, 502, 503, 504]);
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Request interceptor
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    // Initialise retry counter on first attempt
+    if (!config.headers["x-retry-count"]) {
+      config.headers["x-retry-count"] = "0";
+    }
     return config;
   },
   (error) => Promise.reject(error)
@@ -37,7 +49,33 @@ apiClient.interceptors.response.use(
   (response) => {
     return response;
   },
-  (error: AxiosError<{ success?: boolean; message?: string; errors?: Array<{ field?: string; message: string }> }>) => {
+  async (error: AxiosError<{ success?: boolean; message?: string; errors?: Array<{ field?: string; message: string }> }>) => {
+    const config = error.config as InternalAxiosRequestConfig | undefined;
+
+    // ---- Automatic retry for transient server / network errors ----
+    if (config) {
+      const retryCount = parseInt(
+        (config.headers["x-retry-count"] as string) || "0",
+        10
+      );
+
+      const isRetryable =
+        // Network error (no response at all)
+        (!error.response && error.code !== "ERR_CANCELED") ||
+        // Server returned a retryable status
+        (error.response && RETRYABLE_STATUS_CODES.has(error.response.status));
+
+      if (isRetryable && retryCount < MAX_RETRIES) {
+        config.headers["x-retry-count"] = String(retryCount + 1);
+
+        // Exponential back-off: 1s, 2s
+        await sleep(RETRY_DELAY_MS * (retryCount + 1));
+
+        return apiClient.request(config);
+      }
+    }
+
+    // ---- Build a user-friendly error ----
     if (error.response) {
       const { status, data } = error.response;
       const firstError = data?.errors && data.errors.length > 0 ? data.errors[0].message : null;
@@ -66,4 +104,3 @@ apiClient.interceptors.response.use(
     }
   }
 );
-

@@ -4,11 +4,12 @@ import { RedisStore } from "connect-redis";
 
 import { redisClient } from "./redis.js";
 import { env } from "./env.js";
+import { COOKIE_NAME, cookieOptions } from "./cookie.js";
 
 const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000;
 
 export const sessionMiddleware = session({
-  name: "maghora.sid",
+  name: COOKIE_NAME,
 
   store: new RedisStore({
     client: redisClient,
@@ -17,15 +18,12 @@ export const sessionMiddleware = session({
   }),
 
   secret: env.SESSION_SECRET,
-
+  proxy: true,
   resave: false,
   saveUninitialized: false,
 
   cookie: {
-    httpOnly: true,
-    secure: env.NODE_ENV === "production",
-    sameSite: "lax",
+    ...cookieOptions,
     maxAge: SESSION_DURATION,
-    path: "/",
   },
 });

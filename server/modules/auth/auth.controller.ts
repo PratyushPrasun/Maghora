@@ -15,7 +15,7 @@ import {
   resetUserPassword,
 } from "./password-reset.service.js";
 
-import { env } from "../../config/env.js";
+import { COOKIE_NAME, cookieOptions } from "../../config/cookie.js";
 
 const regenerateSession = async (
   req: Request
@@ -105,12 +105,7 @@ export const logout = async (
     });
   });
 
-  res.clearCookie("maghora.sid", {
-    httpOnly: true,
-    secure: env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-  });
+  res.clearCookie(COOKIE_NAME, cookieOptions);
 
   return res.status(200).json({
     success: true,
