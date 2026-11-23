@@ -79,7 +79,7 @@ export function Footer() {
               onClick={handleHomeClick}
               className="inline-flex items-center gap-3 sm:gap-3.5 group cursor-pointer"
             >
-              <div className="relative h-11 w-11 sm:h-14 sm:w-14 shrink-0 rounded-2xl bg-[#F8EEDC] p-1.5 shadow-md">
+              <div className="relative h-14 w-14 sm:h-[68px] sm:w-[68px] shrink-0 rounded-2xl bg-[#F8EEDC] p-1.5 shadow-md">
                 <Image
                   src="/logo.png"
                   alt="Maghora"

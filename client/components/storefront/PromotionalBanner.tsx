@@ -63,7 +63,7 @@ export function PromotionalBanner() {
 
           {/* CTA & Quick Purchase Box */}
           <div className="lg:col-span-4 flex flex-col sm:flex-row lg:flex-col items-center justify-center gap-4 bg-white/5 border border-[#C49A50]/30 rounded-3xl p-6 sm:p-8 backdrop-blur-xs text-center">
-            <div className="relative h-28 w-28 shrink-0">
+            <div className="relative h-36 w-36 shrink-0">
               <Image
                 src="/Magnora.png"
                 alt="Maghora Tasting Box"

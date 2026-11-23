@@ -181,7 +181,7 @@ export function Navbar() {
     if (pathname === "/") {
       const el = document.getElementById("products");
       if (el) {
-        const headerOffset = window.innerWidth < 640 ? 60 : 76;
+        const headerOffset = window.innerWidth < 640 ? 68 : 80;
         const elementPosition = el.getBoundingClientRect().top;
         const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
         window.scrollTo({
@@ -207,7 +207,7 @@ export function Navbar() {
   return (
     <>
       {/* 1. Cultural Announcement Band (Refined, Compact, Heritage-Inspired) */}
-      <div className="bg-[#702C32] text-[#F8EEDC] text-center py-1 sm:py-1.5 px-3 sm:px-4 text-[10px] sm:text-[11px] font-medium tracking-[0.14em] sm:tracking-[0.22em] uppercase select-none border-b border-[#E8B84E]/20 overflow-hidden">
+      <div className="bg-[#702C32] text-[#F8EEDC] text-center py-1 sm:py-1.5 px-2 sm:px-4 text-[9px] sm:text-[11px] font-medium tracking-[0.08em] sm:tracking-[0.22em] uppercase select-none border-b border-[#E8B84E]/20 overflow-hidden">
         <div className="max-w-7xl mx-auto flex items-center justify-center gap-1.5 sm:gap-4 whitespace-nowrap overflow-hidden text-ellipsis">
           <span className="opacity-95 font-serif font-bold text-[#E8B84E]">Maghora</span>
           <span className="text-[#E8B84E]/60 text-xs">✦</span>
@@ -231,27 +231,36 @@ export function Navbar() {
             : "bg-[#F8EEDC] border-b border-[#E8D7BE]/60"
         }`}
       >
-        <div className="mx-auto max-w-7xl px-3.5 sm:px-6 lg:px-8 h-14 sm:h-16 lg:h-[72px]">
-          {/* Desktop 3-Column Balanced Layout / Mobile 2-Column Layout */}
-          <div className="grid grid-cols-2 lg:grid-cols-3 items-center h-full">
+        <div className="mx-auto max-w-7xl px-2.5 sm:px-6 lg:px-8 h-15 sm:h-[68px] lg:h-[76px]">
+          {/* Desktop 3-Column Balanced Layout / Mobile Flex Layout (prevents overlapping) */}
+          <div className="flex items-center justify-between lg:grid lg:grid-cols-3 h-full gap-1.5 sm:gap-4">
             {/* FAR LEFT: Maghora Brand Logo (Aligned to extreme left) */}
-            <div className="flex items-center justify-start">
+            <div className="flex items-center justify-start min-w-0 shrink">
               <Link
                 href="/"
                 onClick={handleHomeClick}
-                className="group flex items-center shrink-0 cursor-pointer transition-opacity hover:opacity-90"
+                className="group flex items-center gap-1.5 sm:gap-2.5 min-w-0 cursor-pointer transition-opacity hover:opacity-90"
                 aria-label="Maghora — Return to home"
               >
-                {/* Strict 1:1 original aspect ratio with tight bounding box (no dead transparent padding) */}
-                <div className="relative h-[42px] w-[42px] sm:h-11 sm:w-11 lg:h-[54px] lg:w-[54px] shrink-0 aspect-square">
+                {/* Logo mark — nicely sized across devices */}
+                <div className="relative h-11 w-11 sm:h-12 sm:w-12 lg:h-[58px] lg:w-[58px] shrink-0 aspect-square">
                   <Image
                     src="/logo-mark.png"
                     alt="Maghora — Traditional Mithila Heritage Foods"
                     fill
                     priority
-                    sizes="(max-width: 640px) 42px, (max-width: 1024px) 44px, 54px"
+                    sizes="(max-width: 640px) 44px, (max-width: 1024px) 48px, 58px"
                     className="object-contain drop-shadow-[0_2px_8px_rgba(112,44,50,0.12)] select-none transition-transform duration-300 group-hover:scale-105"
                   />
+                </div>
+                {/* Brand name + Tagline beside the logo */}
+                <div className="flex flex-col min-w-0 justify-center">
+                  <span className="font-serif font-extrabold text-xs sm:text-base lg:text-lg text-[#702C32] tracking-[0.10em] sm:tracking-[0.16em] leading-tight select-none">
+                    MAGHORA
+                  </span>
+                  <span className="text-[7.5px] xs:text-[8.5px] sm:text-[9.5px] lg:text-[10px] uppercase tracking-[0.05em] sm:tracking-[0.18em] text-[#C65D35] font-semibold leading-tight mt-0.5 whitespace-nowrap">
+                    Ancient Roots, Modern Taste
+                  </span>
                 </div>
               </Link>
             </div>
@@ -318,15 +327,15 @@ export function Navbar() {
             </nav>
 
             {/* FAR RIGHT: Search, Account and Cart Icons (Grouped neatly on the right) */}
-            <div className="flex items-center justify-end gap-1 sm:gap-2">
+            <div className="flex items-center justify-end gap-0.5 sm:gap-2 shrink-0">
               {/* Search Icon */}
               <button
                 onClick={() => setSearchOpen(true)}
-                className="p-2 sm:p-2.5 min-h-[40px] min-w-[40px] flex items-center justify-center text-[#33251F]/80 hover:text-[#702C32] hover:bg-[#EEDEC4]/60 rounded-full transition-colors cursor-pointer group"
+                className="p-1.5 sm:p-2.5 min-h-[36px] min-w-[36px] sm:min-h-[40px] sm:min-w-[40px] flex items-center justify-center text-[#33251F]/80 hover:text-[#702C32] hover:bg-[#EEDEC4]/60 rounded-full transition-colors cursor-pointer group"
                 aria-label="Search flavours"
                 title="Search products"
               >
-                <Search className="h-5 w-5 transition-transform group-hover:scale-105" />
+                <Search className="h-4.5 w-4.5 sm:h-5 sm:w-5 transition-transform group-hover:scale-105" />
               </button>
 
               {/* User Account / Profile Menu (Graceful for both Authenticated & Guest states) */}
@@ -334,24 +343,24 @@ export function Navbar() {
                 {isAuthenticated ? (
                   <button
                     onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                    className="flex items-center gap-1.5 p-1 rounded-full hover:bg-[#EEDEC4]/60 transition-all cursor-pointer group focus-visible:outline-2 focus-visible:outline-[#702C32]"
+                    className="flex items-center p-0.5 sm:p-1 rounded-full hover:bg-[#EEDEC4]/60 transition-all cursor-pointer group focus-visible:outline-2 focus-visible:outline-[#702C32]"
                     aria-label="User account menu"
                     aria-expanded={userDropdownOpen}
                     title="My Account"
                   >
-                    <div className="h-8.5 w-8.5 sm:h-9 sm:w-9 rounded-full bg-gradient-to-br from-[#702C32] to-[#551F24] text-[#F8EEDC] flex items-center justify-center text-xs font-serif font-bold shadow-xs ring-2 ring-[#E8B84E]/30 group-hover:ring-[#E8B84E] transition-all">
+                    <div className="h-7.5 w-7.5 sm:h-9 sm:w-9 rounded-full bg-gradient-to-br from-[#702C32] to-[#551F24] text-[#F8EEDC] flex items-center justify-center text-xs font-serif font-bold shadow-xs ring-2 ring-[#E8B84E]/30 group-hover:ring-[#E8B84E] transition-all">
                       {user?.name?.charAt(0).toUpperCase() || "M"}
                     </div>
                   </button>
                 ) : (
                   <button
                     onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                    className="p-2 sm:p-2.5 min-h-[40px] min-w-[40px] flex items-center justify-center text-[#33251F]/80 hover:text-[#702C32] hover:bg-[#EEDEC4]/60 rounded-full transition-colors cursor-pointer group focus-visible:outline-2 focus-visible:outline-[#702C32]"
+                    className="p-1.5 sm:p-2.5 min-h-[36px] min-w-[36px] sm:min-h-[40px] sm:min-w-[40px] flex items-center justify-center text-[#33251F]/80 hover:text-[#702C32] hover:bg-[#EEDEC4]/60 rounded-full transition-colors cursor-pointer group focus-visible:outline-2 focus-visible:outline-[#702C32]"
                     aria-label="Account menu"
                     aria-expanded={userDropdownOpen}
                     title="Account &amp; Sign In"
                   >
-                    <UserIcon className="h-5 w-5 transition-transform group-hover:scale-105" />
+                    <UserIcon className="h-4.5 w-4.5 sm:h-5 sm:w-5 transition-transform group-hover:scale-105" />
                   </button>
                 )}
 
@@ -519,13 +528,13 @@ export function Navbar() {
               {/* Shopping Cart Button */}
               <button
                 onClick={openCart}
-                className="relative p-2 sm:p-2.5 min-h-[40px] min-w-[40px] flex items-center justify-center text-[#33251F]/80 hover:text-[#702C32] hover:bg-[#EEDEC4]/60 rounded-full transition-colors cursor-pointer group"
+                className="relative p-1.5 sm:p-2.5 min-h-[36px] min-w-[36px] sm:min-h-[40px] sm:min-w-[40px] flex items-center justify-center text-[#33251F]/80 hover:text-[#702C32] hover:bg-[#EEDEC4]/60 rounded-full transition-colors cursor-pointer group"
                 aria-label={`Open shopping cart with ${totalCartCount} items`}
                 title="Cart"
               >
-                <ShoppingBag className="h-5 w-5 transition-transform group-hover:scale-105" />
+                <ShoppingBag className="h-4.5 w-4.5 sm:h-5 sm:w-5 transition-transform group-hover:scale-105" />
                 {totalCartCount > 0 && (
-                  <span className="absolute top-1 right-1 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-[#702C32] px-1 text-[10px] font-bold text-[#F8EEDC] shadow-xs">
+                  <span className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 flex h-4 min-w-4 sm:h-4.5 sm:min-w-4.5 items-center justify-center rounded-full bg-[#702C32] px-1 text-[9px] sm:text-[10px] font-bold text-[#F8EEDC] shadow-xs">
                     {totalCartCount}
                   </span>
                 )}
@@ -534,10 +543,10 @@ export function Navbar() {
               {/* Mobile Hamburger Menu Button (Shown on mobile & tablet < lg) */}
               <button
                 onClick={() => setMenuDrawerOpen(true)}
-                className="lg:hidden p-2 min-h-[40px] min-w-[40px] flex items-center justify-center text-[#33251F] hover:text-[#702C32] hover:bg-[#EEDEC4]/60 rounded-full transition-colors cursor-pointer ml-0.5 active:scale-95"
+                className="lg:hidden p-1.5 min-h-[36px] min-w-[36px] flex items-center justify-center text-[#33251F] hover:text-[#702C32] hover:bg-[#EEDEC4]/60 rounded-full transition-colors cursor-pointer active:scale-95"
                 aria-label="Open navigation menu"
               >
-                <Menu className="h-5.5 w-5.5 stroke-[2.2]" />
+                <Menu className="h-5 w-5 stroke-[2.2]" />
               </button>
             </div>
           </div>
@@ -573,7 +582,7 @@ export function Navbar() {
                     onClick={handleHomeClick}
                     className="flex items-center gap-2.5 cursor-pointer"
                   >
-                    <div className="relative h-11 w-11 shrink-0 aspect-square">
+                    <div className="relative h-13 w-13 shrink-0 aspect-square">
                       <Image
                         src="/logo-mark.png"
                         alt="Maghora"

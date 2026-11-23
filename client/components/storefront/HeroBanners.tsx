@@ -125,7 +125,7 @@ export function HeroBanners() {
           with responsive container geometry so no text or packaging is obscured or distorted.
         */}
         <div
-          className="relative w-full aspect-[2.65/1] sm:aspect-[2.75/1] lg:aspect-[2.85/1] min-h-[145px] sm:min-h-[270px] lg:min-h-[420px] rounded-none sm:rounded-3xl overflow-hidden shadow-[0_8px_30px_rgba(51,37,31,0.06)] sm:shadow-[0_12px_40px_rgba(51,37,31,0.08)] border-y sm:border border-[#E8D7BE] bg-[#EEDEC4] group transition-all duration-300"
+          className="relative w-full aspect-[2.35/1] sm:aspect-[2.75/1] lg:aspect-[2.85/1] rounded-none sm:rounded-3xl overflow-hidden shadow-[0_8px_30px_rgba(51,37,31,0.06)] sm:shadow-[0_12px_40px_rgba(51,37,31,0.08)] border-y sm:border border-[#E8D7BE] bg-[#1E3A2B] group transition-all duration-300"
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
           onTouchStart={handleTouchStart}
@@ -148,7 +148,7 @@ export function HeroBanners() {
                 fill
                 priority={current === 0}
                 quality={92}
-                className="object-contain sm:object-cover w-full h-full select-none"
+                className="object-cover w-full h-full select-none"
                 style={{
                   objectPosition: activeBanner.objectPositionDesktop,
                 }}
