@@ -85,6 +85,10 @@ export async function createRazorpayOrder(
 
   assertReservationIsActive(order);
 
+  if (order.totalPaise < 100) {
+    throw httpError("Minimum order amount is 100 paise", 400);
+  }
+
   let payment = await Payment.findOne({
     orderId: order._id,
   });
@@ -794,4 +798,91 @@ export async function processRazorpayWebhookEvent(event: any) {
       }
     );
   }
+}
+
+/**
+ * Standard Razorpay Order Creation (independent of full cart/reservation flow)
+ */
+export async function createStandardRazorpayOrder({
+  amount,
+  currency = "INR",
+  receipt,
+  notes,
+}: {
+  amount: number;
+  currency?: string;
+  receipt?: string;
+  notes?: Record<string, string>;
+}) {
+  if (amount === undefined || amount === null || isNaN(Number(amount))) {
+    throw httpError("Amount is required and must be a valid number", 400);
+  }
+
+  const numericAmount = Math.round(Number(amount));
+  if (numericAmount < 100) {
+    throw httpError("Minimum amount is 100 paise", 400);
+  }
+
+  try {
+    const razorpayOrder = await razorpay.orders.create({
+      amount: numericAmount,
+      currency: currency || "INR",
+      receipt:
+        receipt ||
+        `rcpt_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      notes: notes || {},
+    });
+
+    return {
+      order_id: razorpayOrder.id,
+      amount: razorpayOrder.amount,
+      currency: razorpayOrder.currency,
+      key_id: env.RAZORPAY_KEY_ID,
+    };
+  } catch (error: any) {
+    if (
+      error?.statusCode === 401 ||
+      (error?.error?.code === "BAD_REQUEST_ERROR" &&
+        error?.error?.description?.toLowerCase().includes("auth"))
+    ) {
+      throw httpError("Razorpay authentication failed", 401);
+    }
+    const message =
+      error?.error?.description ||
+      error?.message ||
+      "Failed to create Razorpay order";
+    throw httpError(message, 500);
+  }
+}
+
+/**
+ * Standard Razorpay Signature Verification
+ */
+export function verifyStandardPaymentSignature({
+  order_id,
+  payment_id,
+  signature,
+}: {
+  order_id: string;
+  payment_id: string;
+  signature: string;
+}) {
+  if (!order_id || !payment_id || !signature) {
+    throw httpError(
+      "Missing required fields: order_id, payment_id, and signature are required",
+      400
+    );
+  }
+
+  const expected = crypto
+    .createHmac("sha256", env.RAZORPAY_KEY_SECRET)
+    .update(`${order_id}|${payment_id}`)
+    .digest("hex");
+
+  const isValid = safeCompareHex(expected, signature);
+  if (!isValid) {
+    throw httpError("Invalid payment signature", 400);
+  }
+
+  return true;
 }
