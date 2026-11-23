@@ -2,7 +2,7 @@
 import type { RequestHandler } from "express";
 
 import User from "../modules/users/user.model.js";
-import { env } from "../config/env.js";
+import { COOKIE_NAME, cookieOptions } from "../config/cookie.js";
 
 export const authenticate: RequestHandler = async (
   req,
@@ -33,12 +33,7 @@ export const authenticate: RequestHandler = async (
         req.session.destroy(() => resolve());
       });
 
-      res.clearCookie("maghora.sid", {
-        httpOnly: true,
-        secure: env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-      });
+      res.clearCookie(COOKIE_NAME, cookieOptions);
 
       res.status(401).json({
         success: false,

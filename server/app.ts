@@ -17,9 +17,13 @@ app.set(
 
 app.use(helmet());
 
+const allowedOrigins = [
+  ...new Set([env.CLIENT_URL, env.ADMIN_URL, env.FRONTEND_URL]),
+];
+
 app.use(
   cors({
-    origin: [env.CLIENT_URL, env.ADMIN_URL],
+    origin: allowedOrigins,
     credentials: true,
   })
 );
