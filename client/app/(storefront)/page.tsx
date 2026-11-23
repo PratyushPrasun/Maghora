@@ -3,8 +3,9 @@ import type { Metadata } from "next";
 import { HeroBanners } from "@/components/storefront/HeroBanners";
 import { BrandStatement } from "@/components/storefront/BrandStatement";
 import { ProductCollection } from "@/components/storefront/ProductCollection";
-import { AboutMakhana } from "@/components/storefront/AboutMakhana";
 import { WhyMaghora } from "@/components/storefront/WhyMaghora";
+import { AboutMakhana } from "@/components/storefront/AboutMakhana";
+import { InstagramFeed } from "@/components/storefront/InstagramFeed";
 import { MarketplaceAvailability } from "@/components/storefront/MarketplaceAvailability";
 import { HashScrollHandler } from "@/components/storefront/HashScrollHandler";
 
@@ -30,13 +31,16 @@ export default function HomePage() {
       {/* SECTION 3: PRODUCT COLLECTION (ID #products) */}
       <ProductCollection />
 
-      {/* SECTION 4: ABOUT MAKHANA (ID #story) */}
-      <AboutMakhana />
-
-      {/* SECTION 5: WHY CHOOSE MAGHORA */}
+      {/* SECTION 4: WHY CHOOSE MAGHORA */}
       <WhyMaghora />
 
-      {/* SECTION 6: AVAILABLE ON */}
+      {/* SECTION 5: ABOUT MAKHANA (ID #story) */}
+      <AboutMakhana />
+
+      {/* SECTION 6: LATEST ON INSTAGRAM */}
+      <InstagramFeed />
+
+      {/* SECTION 7: AVAILABLE ON */}
       <MarketplaceAvailability />
     </>
   );

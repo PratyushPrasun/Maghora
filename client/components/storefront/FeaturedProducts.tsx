@@ -76,6 +76,17 @@ function ProductCard({ product, index }: { product: IProduct; index: number }) {
               %
             </span>
           )}
+
+          {/* Badge: Bestseller wins over Featured when both are set */}
+          {product.isBestseller ? (
+            <span className="absolute top-3 right-3 z-10 pointer-events-none rounded-full bg-[#702C32]/90 border border-white/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white/90 shadow-sm">
+              Bestseller
+            </span>
+          ) : product.isFeatured ? (
+            <span className="absolute top-3 right-3 z-10 pointer-events-none rounded-full bg-[#1A3728]/90 border border-white/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white/90 shadow-sm">
+              Featured
+            </span>
+          ) : null}
         </div>
 
         {/* Info */}
@@ -125,8 +136,10 @@ function SkeletonCard() {
 }
 
 export function FeaturedProducts() {
-  const { data, isLoading, error } = useProducts({ limit: 3, sort: "newest" });
-  const products = data?.products?.slice(0, 3) || [];
+  const { data, isLoading, error } = useProducts({ limit: 12, sort: "newest" });
+  const allProducts = data?.products || [];
+  const featuredOnly = allProducts.filter((p) => p.isFeatured);
+  const products = (featuredOnly.length > 0 ? featuredOnly : allProducts).slice(0, 3);
 
   return (
     <section id="featured-products" className="bg-[#244C38] py-16 sm:py-20 lg:py-24 scroll-mt-20">

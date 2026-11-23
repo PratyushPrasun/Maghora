@@ -10,9 +10,11 @@ import { Button } from "@/components/ui/button";
 import { MithilaLotus } from "./MithilaMotifs";
 
 export function BestsellersSection() {
-  // Query featured products first, or latest active catalogue
-  const { data, isLoading } = useProducts({ limit: 4, sort: "newest" });
-  const products = data?.products || [];
+  // Query bestseller products first, or latest active catalogue
+  const { data, isLoading } = useProducts({ limit: 12, sort: "newest" });
+  const allProducts = data?.products || [];
+  const bestsellersOnly = allProducts.filter((p) => p.isBestseller);
+  const products = (bestsellersOnly.length > 0 ? bestsellersOnly : allProducts).slice(0, 4);
 
   return (
     <section className="bg-white py-16 sm:py-24 border-b border-[#E2D7C3] relative">

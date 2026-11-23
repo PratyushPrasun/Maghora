@@ -153,6 +153,17 @@ export default function ProductDetailPage() {
                   {discount}% OFF
                 </span>
               )}
+
+              {/* Badge: Bestseller wins over Featured when both are set */}
+              {product.isBestseller ? (
+                <span className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 pointer-events-none rounded-full bg-[#702C32] px-2.5 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold uppercase tracking-wide text-[#F8EEDC] shadow-xs">
+                  Bestseller
+                </span>
+              ) : product.isFeatured ? (
+                <span className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 pointer-events-none rounded-full bg-[#244C38] px-2.5 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-bold uppercase tracking-wide text-[#F8EEDC] shadow-xs">
+                  Featured
+                </span>
+              ) : null}
             </div>
 
             {/* Thumbnail Carousel */}
@@ -183,9 +194,20 @@ export default function ProductDetailPage() {
           {/* Right Column: Editorial Product Purchase Panel */}
           <div className="lg:col-span-6 space-y-4 sm:space-y-5">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EEDEC4]/60 border border-[#E8D7BE] text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.24em] text-[#702C32] mb-2 sm:mb-2.5 font-serif">
-                <MithilaLotus className="h-3 w-3 text-[#E8B84E]" />
-                <span>{categoryName}</span>
+              <div className="flex flex-wrap items-center gap-2 mb-2 sm:mb-2.5">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EEDEC4]/60 border border-[#E8D7BE] text-[10px] font-bold uppercase tracking-[0.2em] sm:tracking-[0.24em] text-[#702C32] font-serif">
+                  <MithilaLotus className="h-3 w-3 text-[#E8B84E]" />
+                  <span>{categoryName}</span>
+                </div>
+                {product.isBestseller ? (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-[#702C32] text-[10px] font-bold uppercase tracking-wide text-[#F8EEDC]">
+                    Bestseller
+                  </span>
+                ) : product.isFeatured ? (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-[#244C38] text-[10px] font-bold uppercase tracking-wide text-[#F8EEDC]">
+                    Featured
+                  </span>
+                ) : null}
               </div>
               <h1 className="text-xl sm:text-3xl lg:text-4xl font-bold font-serif text-[#33251F] leading-tight">
                 {product.name}

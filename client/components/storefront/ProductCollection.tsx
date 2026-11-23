@@ -109,6 +109,17 @@ function CompactEditorialCard({
             </span>
           )}
 
+          {/* Badge: Bestseller wins over Featured when both are set */}
+          {product.isBestseller ? (
+            <span className="absolute top-1.5 right-1.5 z-10 pointer-events-none rounded bg-[#702C32]/90 px-1.5 py-[3px] text-[8px] font-bold uppercase tracking-wide text-white/90 shadow-xs">
+              Bestseller
+            </span>
+          ) : product.isFeatured ? (
+            <span className="absolute top-1.5 right-1.5 z-10 pointer-events-none rounded bg-[#244C38]/90 px-1.5 py-[3px] text-[8px] font-bold uppercase tracking-wide text-white/90 shadow-xs">
+              Featured
+            </span>
+          ) : null}
+
           {/* Sold Out Overlay */}
           {!isAvailable && (
             <div className="absolute inset-0 bg-[#F8EEDC]/85 backdrop-blur-xs flex items-center justify-center z-10">

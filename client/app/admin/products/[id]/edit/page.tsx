@@ -37,6 +37,7 @@ const updateProductSchema = z.object({
   shortDescription: z.string().trim().max(250).optional(),
   description: z.string().trim().min(10, "Description must be at least 10 characters").max(5000),
   isFeatured: z.boolean(),
+  isBestseller: z.boolean(),
   variants: z.array(variantSchema).min(1, "At least one variant required"),
   seoTitle: z.string().max(70).optional(),
   seoDescription: z.string().max(170).optional(),
@@ -70,6 +71,7 @@ export default function EditProductPage() {
     resolver: zodResolver(updateProductSchema),
     defaultValues: {
       isFeatured: false,
+      isBestseller: false,
       shortDescription: "",
       seoTitle: "",
       seoDescription: "",
@@ -94,6 +96,7 @@ export default function EditProductPage() {
         shortDescription: currentProduct.shortDescription || "",
         description: currentProduct.description || "",
         isFeatured: currentProduct.isFeatured || false,
+        isBestseller: currentProduct.isBestseller || false,
         seoTitle: currentProduct.seo?.title || "",
         seoDescription: currentProduct.seo?.description || "",
         variants:
@@ -165,6 +168,7 @@ export default function EditProductPage() {
         description: data.description,
         shortDescription: data.shortDescription || "",
         isFeatured: data.isFeatured,
+        isBestseller: data.isBestseller,
         variants: data.variants.map((v) => ({
           ...(v.variantId ? { variantId: v.variantId } : {}),
           sku: v.sku.toUpperCase(),
@@ -274,18 +278,42 @@ export default function EditProductPage() {
               )}
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Featured on Storefront?</Label>
-              <div className="flex items-center gap-2 pt-2">
-                <input
-                  type="checkbox"
-                  id="featuredEdit"
-                  {...register("isFeatured")}
-                  className="h-4 w-4 text-primary rounded"
-                />
-                <label htmlFor="featuredEdit" className="text-xs text-foreground cursor-pointer">
-                  Featured Product
-                </label>
+            <div className="space-y-2 sm:col-span-2 p-4 rounded-2xl bg-muted/30 border border-border/60">
+              <Label className="text-xs font-bold text-foreground">Badges & Merchandising</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div className="flex items-start gap-2.5 p-3 rounded-xl border border-border bg-card">
+                  <input
+                    type="checkbox"
+                    id="featuredEdit"
+                    {...register("isFeatured")}
+                    className="h-4 w-4 text-primary rounded mt-0.5 cursor-pointer"
+                  />
+                  <div>
+                    <label htmlFor="featuredEdit" className="text-xs font-semibold text-foreground cursor-pointer block">
+                      Featured Product
+                    </label>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Displays a green "Featured" badge and prioritizes this item at the top of collections.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2.5 p-3 rounded-xl border border-border bg-card">
+                  <input
+                    type="checkbox"
+                    id="bestsellerEdit"
+                    {...register("isBestseller")}
+                    className="h-4 w-4 text-primary rounded mt-0.5 cursor-pointer"
+                  />
+                  <div>
+                    <label htmlFor="bestsellerEdit" className="text-xs font-semibold text-foreground cursor-pointer block">
+                      Bestseller Product
+                    </label>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      Displays a maroon "Bestseller" badge and highlights this item in the Bestselling Harvests section.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 

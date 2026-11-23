@@ -62,7 +62,7 @@ export function BrandStatement() {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5 }}
-                className="relative h-16 w-16 sm:h-24 sm:w-24 shrink-0 rounded-2xl bg-white border border-[#E8D7BE] p-1.5 sm:p-2 shadow-xs flex items-center justify-center group"
+                className="relative h-20 w-20 sm:h-28 sm:w-28 shrink-0 rounded-2xl bg-white border border-[#E8D7BE] p-1.5 sm:p-2 shadow-xs flex items-center justify-center group"
               >
                 <div className="relative w-full h-full">
                   <Image

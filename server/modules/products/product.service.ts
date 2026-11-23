@@ -92,6 +92,7 @@ export interface CreateProductInput {
   }[];
 
   isFeatured?: boolean;
+  isBestseller?: boolean;
 
   seo?: {
     title?: string;
@@ -137,6 +138,7 @@ export const createProduct = async (
       })),
 
       isFeatured: data.isFeatured ?? false,
+      isBestseller: data.isBestseller ?? false,
 
       seo: {
         title: data.seo?.title ?? "",
@@ -170,6 +172,8 @@ export interface ProductListOptions {
   minPrice?: number;
   maxPrice?: number;
   sort: "newest" | "oldest" | "name_asc" | "name_desc";
+  isFeatured?: boolean;
+  isBestseller?: boolean;
 }
 
 export const listProducts = async (
@@ -183,6 +187,14 @@ export const listProducts = async (
 
     if (!includeInactive) {
       filter.isActive = true;
+    }
+
+    if (options.isFeatured !== undefined) {
+      filter.isFeatured = options.isFeatured;
+    }
+
+    if (options.isBestseller !== undefined) {
+      filter.isBestseller = options.isBestseller;
     }
 
     if (options.search) {
@@ -258,17 +270,23 @@ export const listProducts = async (
       name_desc: { name: -1 },
     } as const;
 
+    const sortOrder = {
+      isFeatured: -1 as const,
+      isBestseller: -1 as const,
+      ...sortMap[options.sort],
+    };
+
     const skip = (options.page - 1) * options.limit;
 
     const selectFields = includeInactive
-      ? "name slug shortDescription category images variants isActive isFeatured seo description createdAt"
-      : "name slug shortDescription category images variants isFeatured createdAt";
+      ? "name slug shortDescription category images variants isActive isFeatured isBestseller seo description createdAt"
+      : "name slug shortDescription category images variants isFeatured isBestseller createdAt";
 
     const [products, total] = await Promise.all([
       Product.find(filter)
         .select(selectFields)
         .populate("category", "name slug")
-        .sort(sortMap[options.sort])
+        .sort(sortOrder)
         .skip(skip)
         .limit(options.limit)
         .lean(),
@@ -372,6 +390,7 @@ export interface UpdateProductInput {
   }[];
 
   isFeatured?: boolean;
+  isBestseller?: boolean;
 
   seo?: {
     title?: string;
@@ -430,6 +449,10 @@ export const updateProduct = async (
 
   if (data.isFeatured !== undefined) {
     product.isFeatured = data.isFeatured;
+  }
+
+  if (data.isBestseller !== undefined) {
+    product.isBestseller = data.isBestseller;
   }
 
   if (data.seo !== undefined) {
@@ -723,6 +746,8 @@ export const deleteProduct = async (id: string) => {
 
 const toPublicProduct = (product: any) => ({
   ...product,
+  isFeatured: Boolean(product.isFeatured),
+  isBestseller: Boolean(product.isBestseller),
 
   // Never expose Cloudinary public IDs.
   images: (product.images ?? []).map((image: any) => ({

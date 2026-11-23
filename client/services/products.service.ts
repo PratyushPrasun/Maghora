@@ -15,6 +15,7 @@ export interface CreateProductFormValues {
     isActive: boolean;
   }[];
   isFeatured?: boolean;
+  isBestseller?: boolean;
   seo?: {
     title?: string;
     description?: string;
@@ -36,6 +37,7 @@ export interface UpdateProductFormValues {
     isActive: boolean;
   }[];
   isFeatured?: boolean;
+  isBestseller?: boolean;
   seo?: {
     title?: string;
     description?: string;
