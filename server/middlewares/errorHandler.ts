@@ -13,10 +13,12 @@ export const errorHandler: ErrorRequestHandler = (
   const statusCode =
     error instanceof ApiError
       ? error.statusCode
+      : typeof (error as any)?.statusCode === "number"
+      ? (error as any).statusCode
       : 500;
 
   const message =
-    error instanceof ApiError
+    error instanceof ApiError || (error as any)?.statusCode
       ? error.message
       : "Internal server error";
 

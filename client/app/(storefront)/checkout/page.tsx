@@ -8,13 +8,9 @@ import {
   MapPin,
   Plus,
   ShieldCheck,
-  CheckCircle2,
   Lock,
-  ArrowRight,
   ChevronLeft,
   CreditCard,
-  Truck,
-  AlertCircle,
 } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 import { useAddresses } from "@/hooks/useAddresses";
@@ -26,13 +22,35 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AddressFormDialog } from "@/components/storefront/AddressFormDialog";
 import { ProductThumbnail } from "@/components/storefront/ProductThumbnail";
-import { MithilaLotus } from "@/components/storefront/MithilaMotifs";
 import { toast } from "sonner";
 
 declare global {
   interface Window {
     Razorpay?: any;
   }
+}
+
+function loadRazorpayScript(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (typeof window !== "undefined" && window.Razorpay) {
+      resolve(true);
+      return;
+    }
+    const existing = document.querySelector(
+      'script[src="https://checkout.razorpay.com/v1/checkout.js"]'
+    );
+    if (existing) {
+      existing.addEventListener("load", () => resolve(true));
+      existing.addEventListener("error", () => resolve(false));
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
 }
 
 export default function CheckoutPage() {
@@ -99,7 +117,14 @@ export default function CheckoutPage() {
       setIsProcessingPayment(true);
 
       // Step 1: Create Order & Reserve Inventory
-      const idempotencyKey = `chk_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      const idempotencyKey =
+        typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+          ? crypto.randomUUID()
+          : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+              const r = (Math.random() * 16) | 0;
+              const v = c === "x" ? r : (r & 0x3) | 0x8;
+              return v.toString(16);
+            });
       const orderResult = await placeOrderMutation.mutateAsync({
         idempotencyKey,
         addressId: selectedAddressId,
@@ -111,56 +136,68 @@ export default function CheckoutPage() {
       // Step 2: Initialize Razorpay Order via Payment API
       const rzpOrder = await paymentsService.createRazorpayOrder(orderId);
 
-      // Step 3: Trigger Razorpay Checkout Modal
-      if (typeof window !== "undefined" && window.Razorpay) {
-        const options = {
-          key: rzpOrder.keyId,
-          amount: rzpOrder.amount,
-          currency: rzpOrder.currency,
-          name: "Maghora Foods",
-          description: `Order ${rzpOrder.orderNumber}`,
-          image: "/logo.png",
-          order_id: rzpOrder.razorpayOrderId,
-          handler: async (response: any) => {
-            try {
-              // Verify payment on backend
-              await paymentsService.verifyPayment({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-              });
-
-              toast.success("Payment verified! Order placed successfully.");
-              router.push(`/orders/${orderId}`);
-            } catch (err: any) {
-              toast.error(err?.message || "Payment verification failed. Please contact support.");
-              router.push(`/orders/${orderId}`);
-            }
-          },
-          prefill: {
-            name: user?.name,
-            email: user?.email,
-            contact: user?.phone,
-          },
-          theme: {
-            color: "#702C32",
-          },
-        };
-
-        const razorpayInstance = new window.Razorpay(options);
-        razorpayInstance.on("payment.failed", (response: any) => {
-          toast.error(response.error.description || "Payment failed. Please retry.");
-          router.push(`/orders/${orderId}`);
-        });
-        razorpayInstance.open();
-      } else {
-        toast.info("Order created. Please view your order confirmation.");
-        router.push(`/orders/${orderId}`);
+      // Step 3: Ensure Razorpay SDK is loaded
+      const isScriptLoaded = await loadRazorpayScript();
+      if (!isScriptLoaded || typeof window.Razorpay === "undefined") {
+        toast.error("Could not load Razorpay payment gateway. Please check your internet connection.");
+        setIsProcessingPayment(false);
+        return;
       }
+
+      // Step 4: Trigger Razorpay Standard Checkout Modal
+      const options = {
+        key: rzpOrder.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: rzpOrder.amount,
+        currency: rzpOrder.currency,
+        name: "Maghora Foods",
+        description: `Order ${rzpOrder.orderNumber}`,
+        image: "/logo.png",
+        order_id: rzpOrder.razorpayOrderId,
+        modal: {
+          ondismiss: () => {
+            setIsProcessingPayment(false);
+            toast.error("Payment cancelled by user");
+          },
+        },
+        handler: async (response: any) => {
+          try {
+            // Verify payment on backend
+            await paymentsService.verifyPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+
+            toast.success("Payment verified! Order placed successfully.");
+            router.push(`/orders/${orderId}`);
+          } catch (err: any) {
+            toast.error(err?.message || "Payment verification failed. Please contact support.");
+            router.push(`/orders/${orderId}`);
+          } finally {
+            setIsProcessingPayment(false);
+          }
+        },
+        prefill: {
+          name: user?.name,
+          email: user?.email,
+          contact: user?.phone,
+        },
+        theme: {
+          color: "#702C32",
+        },
+      };
+
+      const razorpayInstance = new window.Razorpay(options);
+      razorpayInstance.on("payment.failed", (response: any) => {
+        setIsProcessingPayment(false);
+        const description = response?.error?.description || "Payment failed. Please retry.";
+        toast.error(description);
+        router.push(`/orders/${orderId}`);
+      });
+      razorpayInstance.open();
     } catch (err: any) {
-      toast.error(err?.message || "Checkout could not be completed. Please retry.");
-    } finally {
       setIsProcessingPayment(false);
+      toast.error(err?.message || "Checkout could not be completed. Please retry.");
     }
   };
 

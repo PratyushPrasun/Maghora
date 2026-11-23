@@ -26,6 +26,10 @@ import cartRoutes from "./modules/cart/cart.routes.js";
 import orderRoutes from "./modules/orders/order.routes.js";
 import addressRoutes from "./modules/addresses/address.routes.js";
 import paymentRoutes from "./modules/payments/payment.routes.js";
+import {
+  createStandardOrderController,
+  verifyStandardPaymentController,
+} from "./modules/payments/payment.controller.js";
 
 import { startOrderExpiryWorker } from "./modules/orders/order-expiry.worker.js";
 
@@ -64,6 +68,10 @@ const startServer = async (): Promise<void> => {
     app.use("/api/addresses", addressRoutes);
 
     app.use("/api/payments", paymentRoutes);
+
+    // Razorpay Standard Checkout endpoints
+    app.post("/api/create-order", createStandardOrderController);
+    app.post("/api/verify-payment", verifyStandardPaymentController);
 
     app.get("/api/health", (_req, res) => {
       res.status(200).json({

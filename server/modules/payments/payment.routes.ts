@@ -4,6 +4,8 @@ import {
   createPaymentController,
   verifyPaymentController,
   getPaymentStatusController,
+  createStandardOrderController,
+  verifyStandardPaymentController,
 } from "./payment.controller.js";
 
 import {
@@ -15,8 +17,12 @@ import { authorize } from "../../middlewares/authorize.js";
 
 const router = Router();
 
-// Public endpoint, but protected by Razorpay's HMAC signature.
+// Public webhook endpoint, protected by Razorpay's HMAC signature.
 router.post("/webhook", razorpayWebhookController);
+
+// Standard Razorpay Checkout endpoints
+router.post("/create-order", createStandardOrderController);
+router.post("/verify-payment", verifyStandardPaymentController);
 
 // All remaining payment endpoints require customer authentication.
 router.use(authenticate);
