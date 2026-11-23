@@ -22,8 +22,11 @@ export const sessionMiddleware = session({
   resave: false,
   saveUninitialized: false,
 
-  cookie: {
-    ...cookieOptions,
-    maxAge: SESSION_DURATION,
-  },
+ cookie: {
+  httpOnly: true,
+  secure: true,
+  sameSite: "none",
+  maxAge: SESSION_DURATION,
+  path: "/",
+},
 });
