@@ -1,13 +1,30 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { cartService, AddCartItemPayload } from "@/services/cart.service";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useCartStore } from "@/stores/useCartStore";
+import {
+  getGuestCart,
+  addGuestCartItem,
+  updateGuestCartItem,
+  removeGuestCartItem,
+  clearGuestCart,
+  syncGuestCartToServer,
+} from "@/lib/guest-cart";
 import { toast } from "sonner";
+import { ICart } from "@/types/api";
 
 export const CART_KEYS = {
   cart: ["cart"] as const,
+};
+
+const EMPTY_CART: ICart = {
+  items: [],
+  itemCount: 0,
+  subtotalPaise: 0,
+  hasUnavailableItems: false,
 };
 
 export function useCart() {
@@ -16,38 +33,92 @@ export function useCart() {
   const { openCart } = useCartStore();
 
   const {
-    data: cart,
-    isLoading,
+    data: serverCart,
+    isLoading: isServerLoading,
     error,
     refetch,
   } = useQuery({
     queryKey: CART_KEYS.cart,
     queryFn: () => cartService.getCart(),
-    enabled: Boolean(user), // Cart requires authentication on backend
+    enabled: Boolean(user),
     staleTime: 30 * 1000,
   });
 
+  // Guest cart state for reactive rendering when unauthenticated
+  const [guestCartState, setGuestCartState] = useState<ICart>(EMPTY_CART);
+
+  // Initialize guest cart on client mount
+  useEffect(() => {
+    if (!user) {
+      setGuestCartState(getGuestCart());
+    }
+  }, [user]);
+
+  // Sync guest cart to server as soon as user is authenticated
+  useEffect(() => {
+    if (user) {
+      const guest = getGuestCart();
+      if (guest.items.length > 0) {
+        syncGuestCartToServer().then(() => {
+          refetch();
+        });
+      }
+    }
+  }, [user, refetch]);
+
+  // Listen for guest cart updates across components / windows
+  useEffect(() => {
+    if (!user) {
+      const handleCartUpdate = () => {
+        setGuestCartState(getGuestCart());
+      };
+      window.addEventListener("guest_cart_updated", handleCartUpdate);
+      window.addEventListener("storage", handleCartUpdate);
+      return () => {
+        window.removeEventListener("guest_cart_updated", handleCartUpdate);
+        window.removeEventListener("storage", handleCartUpdate);
+      };
+    }
+  }, [user]);
+
+  const cart: ICart = user
+    ? serverCart || EMPTY_CART
+    : guestCartState;
+
   const addItemMutation = useMutation({
-    mutationFn: (payload: AddCartItemPayload) => cartService.addItem(payload),
+    mutationFn: async (payload: AddCartItemPayload) => {
+      if (!user) {
+        return await addGuestCartItem(payload);
+      }
+      return await cartService.addItem(payload);
+    },
     onSuccess: (updatedCart) => {
-      queryClient.setQueryData(CART_KEYS.cart, updatedCart);
+      if (!user) {
+        setGuestCartState(updatedCart);
+      } else {
+        queryClient.setQueryData(CART_KEYS.cart, updatedCart);
+      }
       toast.success("Added to cart!");
       openCart();
     },
     onError: (err: any) => {
-      if (err?.statusCode === 401) {
-        toast.error("Please login to add items to your cart");
-      } else {
-        toast.error(err?.message || "Could not add item to cart");
-      }
+      toast.error(err?.message || "Could not add item to cart");
     },
   });
 
   const updateItemMutation = useMutation({
-    mutationFn: ({ itemId, quantity }: { itemId: string; quantity: number }) =>
-      cartService.updateItem(itemId, quantity),
+    mutationFn: async ({ itemId, quantity }: { itemId: string; quantity: number }) => {
+      if (!user) {
+        return updateGuestCartItem(itemId, quantity);
+      }
+      return await cartService.updateItem(itemId, quantity);
+    },
     onSuccess: (updatedCart) => {
-      queryClient.setQueryData(CART_KEYS.cart, updatedCart);
+      if (!user) {
+        setGuestCartState(updatedCart);
+      } else {
+        queryClient.setQueryData(CART_KEYS.cart, updatedCart);
+      }
     },
     onError: (err: any) => {
       toast.error(err?.message || "Could not update item quantity");
@@ -55,9 +126,18 @@ export function useCart() {
   });
 
   const removeItemMutation = useMutation({
-    mutationFn: (itemId: string) => cartService.removeItem(itemId),
+    mutationFn: async (itemId: string) => {
+      if (!user) {
+        return removeGuestCartItem(itemId);
+      }
+      return await cartService.removeItem(itemId);
+    },
     onSuccess: (updatedCart) => {
-      queryClient.setQueryData(CART_KEYS.cart, updatedCart);
+      if (!user) {
+        setGuestCartState(updatedCart);
+      } else {
+        queryClient.setQueryData(CART_KEYS.cart, updatedCart);
+      }
       toast.success("Item removed from cart");
     },
     onError: (err: any) => {
@@ -66,14 +146,18 @@ export function useCart() {
   });
 
   const clearCartMutation = useMutation({
-    mutationFn: () => cartService.clearCart(),
+    mutationFn: async () => {
+      if (!user) {
+        return clearGuestCart();
+      }
+      await cartService.clearCart();
+    },
     onSuccess: () => {
-      queryClient.setQueryData(CART_KEYS.cart, {
-        items: [],
-        itemCount: 0,
-        subtotalPaise: 0,
-        hasUnavailableItems: false,
-      });
+      if (!user) {
+        setGuestCartState(EMPTY_CART);
+      } else {
+        queryClient.setQueryData(CART_KEYS.cart, EMPTY_CART);
+      }
       toast.success("Cart cleared");
     },
     onError: (err: any) => {
@@ -82,13 +166,8 @@ export function useCart() {
   });
 
   return {
-    cart: cart || {
-      items: [],
-      itemCount: 0,
-      subtotalPaise: 0,
-      hasUnavailableItems: false,
-    },
-    isLoading: isLoading && Boolean(user),
+    cart,
+    isLoading: Boolean(user) && isServerLoading,
     error,
     refetch,
     addItem: addItemMutation.mutateAsync,
@@ -100,4 +179,3 @@ export function useCart() {
     clearCart: clearCartMutation.mutateAsync,
   };
 }
-

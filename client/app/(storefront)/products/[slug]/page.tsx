@@ -105,6 +105,8 @@ export default function ProductDetailPage() {
         productId: product._id,
         variantId: selectedVariant._id,
         quantity,
+        product,
+        variant: selectedVariant,
       });
       setAddedJustNow(true);
       setTimeout(() => setAddedJustNow(false), 2000);

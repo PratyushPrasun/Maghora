@@ -1,10 +1,12 @@
 import { apiClient } from "@/lib/api-client";
-import { ApiResponse, ICart } from "@/types/api";
+import { ApiResponse, ICart, IProduct, IProductVariant } from "@/types/api";
 
 export interface AddCartItemPayload {
   productId: string;
   variantId: string;
   quantity: number;
+  product?: IProduct;
+  variant?: IProductVariant;
 }
 
 export const cartService = {
@@ -14,7 +16,12 @@ export const cartService = {
   },
 
   async addItem(payload: AddCartItemPayload): Promise<ICart> {
-    const response = await apiClient.post<ApiResponse<ICart>>("/cart/items", payload);
+    // Only send strictly accepted fields to the backend API schema
+    const response = await apiClient.post<ApiResponse<ICart>>("/cart/items", {
+      productId: payload.productId,
+      variantId: payload.variantId,
+      quantity: payload.quantity,
+    });
     return response.data.data;
   },
 
@@ -32,4 +39,3 @@ export const cartService = {
     await apiClient.delete<ApiResponse<{ message: string }>>("/cart");
   },
 };
-

@@ -51,6 +51,8 @@ export function ProductCard({ product }: ProductCardProps) {
         productId: product._id,
         variantId: primaryVariant._id,
         quantity: 1,
+        product,
+        variant: primaryVariant,
       });
       setAddedJustNow(true);
       setTimeout(() => setAddedJustNow(false), 1800);
