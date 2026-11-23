@@ -33,6 +33,7 @@ export interface IProduct extends Document {
   variants: IProductVariant[];
   isActive: boolean;
   isFeatured: boolean;
+  isBestseller: boolean;
   isDeleted: boolean;
   seo: {
     title: string;
@@ -198,6 +199,11 @@ const productSchema = new Schema<IProduct>(
       default: false,
     },
 
+    isBestseller: {
+      type: Boolean,
+      default: false,
+    },
+
     isDeleted: {
       type: Boolean,
       default: false,
@@ -241,6 +247,15 @@ productSchema.index({
   category: 1,
   isActive: 1,
   isDeleted: 1,
+  createdAt: -1,
+});
+
+// Optimization for featured & bestseller prioritized ordering
+productSchema.index({
+  isActive: 1,
+  isDeleted: 1,
+  isFeatured: -1,
+  isBestseller: -1,
   createdAt: -1,
 });
 

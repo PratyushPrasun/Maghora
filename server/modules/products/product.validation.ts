@@ -97,6 +97,8 @@ export const createProductSchema = z.object({
 
   isFeatured: z.boolean().default(false),
 
+  isBestseller: z.boolean().default(false),
+
   seo: seoSchema,
 }).strict();
 
@@ -127,6 +129,8 @@ export const updateProductSchema = z.object({
     .optional(),
 
   isFeatured: z.boolean().optional(),
+
+  isBestseller: z.boolean().optional(),
 
   seo: z.object({
     title: z.string().trim().max(70).optional(),
@@ -166,6 +170,18 @@ export const productQuerySchema = z.object({
     "name_asc",
     "name_desc",
   ]).default("newest"),
+
+  isFeatured: z.preprocess((val) => {
+    if (val === "true" || val === true) return true;
+    if (val === "false" || val === false) return false;
+    return undefined;
+  }, z.boolean().optional()),
+
+  isBestseller: z.preprocess((val) => {
+    if (val === "true" || val === true) return true;
+    if (val === "false" || val === false) return false;
+    return undefined;
+  }, z.boolean().optional()),
 }).refine(
   (data) =>
     data.minPrice === undefined ||

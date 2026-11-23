@@ -150,9 +150,17 @@ export default function AdminProductsPage() {
                           </div>
                           <div>
                             <p className="font-bold text-foreground text-sm">{product.name}</p>
-                            <span className="text-[11px] text-muted-foreground font-mono">
-                              /{product.slug}
-                            </span>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="text-[11px] text-muted-foreground font-mono">
+                                /{product.slug}
+                              </span>
+                              {product.isFeatured && (
+                                <Badge variant="default" className="text-[9px] px-1.5 py-0 h-4 bg-[#244C38] hover:bg-[#244C38]">Featured</Badge>
+                              )}
+                              {product.isBestseller && (
+                                <Badge variant="default" className="text-[9px] px-1.5 py-0 h-4 bg-[#702C32] hover:bg-[#702C32]">Bestseller</Badge>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </td>

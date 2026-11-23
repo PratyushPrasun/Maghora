@@ -89,6 +89,7 @@ export interface IProduct {
   variants: IProductVariant[];
   isActive: boolean;
   isFeatured: boolean;
+  isBestseller: boolean;
   isDeleted?: boolean;
   seo?: {
     title: string;
@@ -111,6 +112,8 @@ export interface ProductQueryOptions {
   minPrice?: number;
   maxPrice?: number;
   sort?: "newest" | "oldest" | "name_asc" | "name_desc";
+  isFeatured?: boolean;
+  isBestseller?: boolean;
 }
 
 // ------------------------------------------
