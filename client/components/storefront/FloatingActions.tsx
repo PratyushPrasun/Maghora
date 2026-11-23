@@ -28,7 +28,7 @@ export function FloatingActions() {
     });
   };
 
-  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "919288494099";
+  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "918893932380";
   const defaultMessage = encodeURIComponent(
     "Namaste Maghora! I would like to know more about your flavoured roasted makhana."
   );

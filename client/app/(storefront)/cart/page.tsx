@@ -65,22 +65,7 @@ export default function CartPage() {
           </div>
         </div>
 
-        {!isAuthenticated ? (
-          <div className="rounded-3xl border border-[#E8D7BE] bg-white p-8 sm:p-12 text-center max-w-md mx-auto shadow-sm">
-            <div className="h-14 w-14 rounded-full bg-[#F8EEDC] text-[#702C32] flex items-center justify-center mx-auto mb-4">
-              <ShoppingBag className="h-7 w-7" />
-            </div>
-            <h2 className="text-xl font-bold font-serif text-[#33251F]">Please Sign In</h2>
-            <p className="mt-2 text-xs sm:text-sm text-[#7B685F] mb-6 leading-relaxed">
-              Sign in to your Maghora account to access your saved items, fast checkout, and track orders.
-            </p>
-            <Link href="/login?redirect=/cart">
-              <Button className="w-full bg-[#702C32] hover:bg-[#551F24] text-[#F8EEDC] rounded-xl text-xs font-serif font-bold uppercase tracking-wider h-11">
-                Sign In to Maghora
-              </Button>
-            </Link>
-          </div>
-        ) : items.length === 0 ? (
+        {items.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-[#E8D7BE] bg-white p-12 sm:p-16 text-center max-w-lg mx-auto shadow-xs">
             <div className="h-16 w-16 bg-[#F8EEDC] rounded-full flex items-center justify-center text-[#702C32] mx-auto mb-4">
               <ShoppingBag className="h-8 w-8" />
@@ -90,7 +75,7 @@ export default function CartPage() {
               Looks like you haven&apos;t added any crunchy roasted flavours to your basket yet.
             </p>
             <Link href="/products">
-              <Button size="lg" className="rounded-xl bg-[#702C32] hover:bg-[#551F24] text-[#F8EEDC] text-xs font-serif font-bold uppercase tracking-wider">
+              <Button size="lg" className="rounded-xl bg-[#702C32] hover:bg-[#551F24] text-[#F8EEDC] text-xs font-serif font-bold uppercase tracking-wider cursor-pointer">
                 Explore Flavours
               </Button>
             </Link>
@@ -259,16 +244,25 @@ export default function CartPage() {
                   </div>
                 </div>
 
-                <Link href="/checkout" className="block w-full">
+                <Link
+                  href={isAuthenticated ? "/checkout" : "/login?redirect=/checkout"}
+                  className="block w-full"
+                >
                   <Button
                     size="lg"
                     disabled={cart.hasUnavailableItems}
                     className="w-full rounded-xl gap-2 font-serif font-bold uppercase tracking-wider text-xs h-12 bg-[#702C32] hover:bg-[#551F24] text-[#F8EEDC] shadow-md cursor-pointer"
                   >
-                    <span>Proceed to Checkout</span>
+                    <span>{isAuthenticated ? "Proceed to Checkout" : "Login to Checkout"}</span>
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
+
+                {!isAuthenticated && (
+                  <p className="text-center text-[11px] text-[#702C32] font-medium pt-1">
+                    You will be prompted to login or register to complete your order.
+                  </p>
+                )}
 
                 <div className="pt-2 text-center text-[11px] text-[#7B685F] flex items-center justify-center gap-1.5">
                   <ShieldCheck className="h-4 w-4 text-[#536B42]" />

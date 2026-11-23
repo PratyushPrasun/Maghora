@@ -100,7 +100,18 @@ function ProductsCatalogueContent() {
           </form>
 
           {/* Sort & Mobile Filter Toggle */}
-          <div className="flex items-center gap-2.5 justify-between md:justify-end">
+          <div className="flex items-center gap-2.5 justify-between md:justify-end flex-wrap">
+            {(search || selectedCategory || sort !== "newest") && (
+              <button
+                onClick={resetFilters}
+                className="flex items-center gap-1.5 h-11 px-4 rounded-2xl border border-[#702C32] bg-[#702C32] text-[#F8EEDC] text-xs font-serif font-bold uppercase tracking-wider hover:bg-[#551F24] transition-all cursor-pointer shadow-xs"
+                title="Clear all filters and show all products"
+              >
+                <span>Show All Products</span>
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+
             <button
               onClick={() => setShowFiltersMobile(!showFiltersMobile)}
               className="md:hidden flex items-center gap-2 h-11 px-4 rounded-2xl border border-[#E8D7BE] bg-white text-xs font-semibold text-[#33251F] cursor-pointer"
@@ -133,14 +144,16 @@ function ProductsCatalogueContent() {
         {/* Category Pills (Desktop) */}
         <div className="hidden md:flex items-center gap-2 flex-wrap mb-7">
           <button
-            onClick={() => handleCategorySelect("")}
+            onClick={() => {
+              resetFilters();
+            }}
             className={`h-8 px-4 rounded-full text-xs font-serif font-bold uppercase tracking-wider transition-all cursor-pointer ${
-              selectedCategory === ""
+              selectedCategory === "" && !search
                 ? "bg-[#702C32] text-[#F8EEDC] shadow-xs"
                 : "border border-[#E8D7BE] bg-white text-[#33251F]/80 hover:bg-[#F8EEDC]"
             }`}
           >
-            All Flavours
+            Show All Products
           </button>
           {categories.map((cat) => (
             <button
@@ -160,14 +173,16 @@ function ProductsCatalogueContent() {
         {/* Category Pills (Mobile horizontal swipeable strip) */}
         <div className="flex md:hidden items-center gap-2 overflow-x-auto pb-2 mb-4 scrollbar-none -mx-4 px-4">
           <button
-            onClick={() => handleCategorySelect("")}
+            onClick={() => {
+              resetFilters();
+            }}
             className={`h-8 shrink-0 px-3.5 rounded-full text-xs font-serif font-bold uppercase tracking-wider transition-all cursor-pointer ${
-              selectedCategory === ""
+              selectedCategory === "" && !search
                 ? "bg-[#702C32] text-[#F8EEDC] shadow-xs"
                 : "border border-[#E8D7BE] bg-white text-[#33251F]/80 hover:bg-[#F8EEDC]"
             }`}
           >
-            All
+            All Products
           </button>
           {categories.map((cat) => (
             <button

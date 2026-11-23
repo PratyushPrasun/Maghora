@@ -31,6 +31,8 @@ function ProductCard({ product, index }: { product: IProduct; index: number }) {
       productId: product._id,
       variantId: firstVariant._id,
       quantity: 1,
+      product,
+      variant: firstVariant,
     });
   };
 

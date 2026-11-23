@@ -59,7 +59,7 @@ const FAQS = [
   },
   {
     q: "Do you offer bulk, wholesale, or corporate gifting?",
-    a: "Yes! For bespoke corporate gifting, festive boxes, and wholesale distribution inquiries, please email us directly at maghora0408@gmail.com, call +91 88939 32380, or WhatsApp +91 92884 94099 with your requirements.",
+    a: "Yes! For bespoke corporate gifting, festive boxes, and wholesale distribution inquiries, please email us directly at maghora0408@gmail.com, call +91 88939 32380, or WhatsApp +91 88939 32380 with your requirements.",
   },
 ];
 
@@ -96,7 +96,7 @@ export function ContactClient() {
     toast.success("Thank you! Your message has been received.");
   };
 
-  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "919288494099";
+  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "918893932380";
   const contactPhone = process.env.NEXT_PUBLIC_CONTACT_PHONE || "+918893932380";
   const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "maghora0408@gmail.com";
 
@@ -190,7 +190,7 @@ export function ContactClient() {
                       rel="noopener noreferrer"
                       className="text-xs sm:text-sm font-semibold text-[#536B42] hover:underline mt-0.5 inline-block"
                     >
-                      +91 92884 94099 · Chat on WhatsApp
+                      +91 88939 32380 · Chat on WhatsApp
                     </a>
                     <p className="text-[11px] text-[#7B685F] mt-0.5">
                       Instant queries, order assistance &amp; bulk support

@@ -39,7 +39,7 @@ export function Footer() {
     }
   };
 
-  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "919288494099";
+  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "918893932380";
   const contactPhone = process.env.NEXT_PUBLIC_CONTACT_PHONE || "+918893932380";
   const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "maghora0408@gmail.com";
 
@@ -191,7 +191,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="hover:text-[#E8B84E] transition-colors py-0.5 inline-block"
                 >
-                  WhatsApp: +91 92884 94099
+                  WhatsApp: +91 88939 32380
                 </a>
               </li>
               <li className="flex items-start gap-2.5">

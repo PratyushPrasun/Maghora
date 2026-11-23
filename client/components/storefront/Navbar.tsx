@@ -295,6 +295,21 @@ export function Navbar() {
                 <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-[#702C32] rounded-full transition-all duration-300 group-hover:w-full" />
               </button>
 
+              {/* All Products (Redirects to full /products catalog) */}
+              <Link
+                href="/products"
+                className={`text-xs font-serif font-bold uppercase tracking-[0.24em] transition-colors py-1 relative group ${
+                  pathname === "/products" ? "text-[#702C32]" : "text-[#33251F]/80 hover:text-[#702C32]"
+                }`}
+              >
+                <span>Products</span>
+                <span
+                  className={`absolute bottom-0 left-0 h-[2px] bg-[#702C32] rounded-full transition-all duration-300 ${
+                    pathname === "/products" ? "w-full" : "w-0 group-hover:w-full"
+                  }`}
+                />
+              </Link>
+
               {/* About (Redirects to dedicated /about page) */}
               <Link
                 href="/about"

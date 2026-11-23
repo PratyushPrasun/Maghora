@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authService, LoginPayload, RegisterPayload } from "@/services/auth.service";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { syncGuestCartToServer } from "@/lib/guest-cart";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -47,9 +48,10 @@ export function useAuth() {
 
   const loginMutation = useMutation({
     mutationFn: (credentials: LoginPayload) => authService.login(credentials),
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       setUser(data.user);
       queryClient.setQueryData(AUTH_KEYS.currentUser, data.user);
+      await syncGuestCartToServer();
       queryClient.invalidateQueries({ queryKey: ["cart"] });
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       queryClient.invalidateQueries({ queryKey: ["addresses"] });
@@ -62,9 +64,11 @@ export function useAuth() {
 
   const registerMutation = useMutation({
     mutationFn: (payload: RegisterPayload) => authService.register(payload),
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       setUser(data.user);
       queryClient.setQueryData(AUTH_KEYS.currentUser, data.user);
+      await syncGuestCartToServer();
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
       toast.success("Account created successfully! Welcome to Maghora.");
     },
     onError: (err: any) => {

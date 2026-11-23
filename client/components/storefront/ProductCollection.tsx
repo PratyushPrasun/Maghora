@@ -65,6 +65,8 @@ function CompactEditorialCard({
         productId: product._id,
         variantId: firstVariant._id,
         quantity: 1,
+        product,
+        variant: firstVariant,
       });
       setAddedJustNow(true);
       setTimeout(() => setAddedJustNow(false), 1800);
@@ -391,6 +393,17 @@ export function ProductCollection() {
                   isMobileCarousel={false}
                 />
               ))}
+            </div>
+
+            {/* SHOW ALL PRODUCTS BUTTON */}
+            <div className="mt-8 sm:mt-10 text-center">
+              <Link
+                href="/products"
+                className="inline-flex items-center gap-2.5 px-6 sm:px-8 py-3 sm:py-3.5 rounded-2xl bg-[#702C32] hover:bg-[#551F24] text-[#F8EEDC] font-serif font-bold text-xs uppercase tracking-[0.22em] shadow-md hover:shadow-lg transition-all group cursor-pointer"
+              >
+                <span>Show All Products</span>
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Link>
             </div>
           </div>
         )}

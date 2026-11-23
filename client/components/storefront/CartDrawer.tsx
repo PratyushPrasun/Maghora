@@ -72,24 +72,7 @@ export function CartDrawer() {
 
               {/* Cart Content */}
               <div className="flex-1 overflow-y-auto p-4 sm:p-5">
-                {!isAuthenticated ? (
-                  <div className="h-full flex flex-col items-center justify-center text-center py-12 px-4">
-                    <div className="h-16 w-16 rounded-full bg-white border border-[#E8D7BE] flex items-center justify-center text-[#702C32] mb-4 shadow-xs">
-                      <ShoppingBag className="h-8 w-8" />
-                    </div>
-                    <h3 className="text-lg font-serif font-bold text-[#33251F] mb-1.5">
-                      Please Sign In
-                    </h3>
-                    <p className="text-xs text-[#7B685F] mb-6 max-w-xs leading-relaxed">
-                      Sign in to your Maghora account to access your basket and checkout.
-                    </p>
-                    <Link href="/login" onClick={closeCart} className="w-full">
-                      <Button className="w-full bg-[#702C32] hover:bg-[#551F24] text-[#F8EEDC] rounded-xl text-xs font-serif font-bold uppercase tracking-wider h-11" size="lg">
-                        Sign In to Continue
-                      </Button>
-                    </Link>
-                  </div>
-                ) : items.length === 0 ? (
+                {items.length === 0 ? (
                   <div className="h-full flex flex-col items-center justify-center text-center py-12 px-4">
                     <div className="h-16 w-16 rounded-full bg-white border border-[#E8D7BE] flex items-center justify-center text-[#7B685F] mb-4">
                       <ShoppingBag className="h-8 w-8 stroke-1" />
@@ -191,7 +174,7 @@ export function CartDrawer() {
               </div>
 
               {/* Footer */}
-              {isAuthenticated && items.length > 0 && (
+              {items.length > 0 && (
                 <div className="p-4 sm:p-5 border-t border-[#E8D7BE] bg-white space-y-3.5">
                   <div className="space-y-1.5 text-xs">
                     <div className="flex justify-between text-[#7B685F]">
@@ -210,20 +193,26 @@ export function CartDrawer() {
 
                   <div className="grid grid-cols-2 gap-2">
                     <Link href="/cart" onClick={closeCart} className="w-full">
-                      <Button variant="outline" className="w-full rounded-xl border-[#E8D7BE] text-xs font-serif font-bold uppercase tracking-wider text-[#33251F] hover:bg-[#F8EEDC]">
+                      <Button variant="outline" className="w-full rounded-xl border-[#E8D7BE] text-xs font-serif font-bold uppercase tracking-wider text-[#33251F] hover:bg-[#F8EEDC] cursor-pointer">
                         View Basket
                       </Button>
                     </Link>
-                    <Link href="/checkout" onClick={closeCart} className="w-full">
-                      <Button className="w-full rounded-xl bg-[#702C32] hover:bg-[#551F24] text-[#F8EEDC] text-xs font-serif font-bold uppercase tracking-wider" disabled={cart.hasUnavailableItems}>
-                        Checkout <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                    <Link href={isAuthenticated ? "/checkout" : "/login?redirect=/checkout"} onClick={closeCart} className="w-full">
+                      <Button className="w-full rounded-xl bg-[#702C32] hover:bg-[#551F24] text-[#F8EEDC] text-xs font-serif font-bold uppercase tracking-wider cursor-pointer" disabled={cart.hasUnavailableItems}>
+                        {isAuthenticated ? "Checkout" : "Checkout"} <ArrowRight className="h-3.5 w-3.5 ml-1" />
                       </Button>
                     </Link>
                   </div>
 
-                  <p className="text-[10px] text-center text-[#7B685F] pt-1">
-                    Olive Oil • Direct Mithila Sourcing
-                  </p>
+                  {!isAuthenticated ? (
+                    <p className="text-[10px] text-center text-[#702C32] font-medium pt-0.5">
+                      Sign in or register required at checkout
+                    </p>
+                  ) : (
+                    <p className="text-[10px] text-center text-[#7B685F] pt-1">
+                      Olive Oil • Direct Mithila Sourcing
+                    </p>
+                  )}
                 </div>
               )}
             </motion.div>
