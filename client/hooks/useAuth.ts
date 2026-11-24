@@ -7,6 +7,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { syncGuestCartToServer } from "@/lib/guest-cart";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { CART_KEYS } from "@/hooks/useCart";
 
 export const AUTH_KEYS = {
   currentUser: ["auth", "me"] as const,
@@ -46,15 +47,45 @@ export function useAuth() {
     }
   }, [currentUser, queryLoading, setUser]);
 
+  /**
+   * Post-auth handler shared by login and register.
+   *
+   * Sequence:
+   * 1. Update auth state so the UI reflects the authenticated user.
+   * 2. Merge guest cart → server via the idempotent /cart/merge endpoint.
+   * 3. Set the returned cart as the query cache so the UI updates immediately
+   *    without an extra round-trip.
+   * 4. Invalidate other user-specific queries (orders, addresses).
+   *
+   * The merge function has its own concurrency guard so even if React
+   * Strict Mode or the useCart effect tries to call it again, only one
+   * request runs.
+   */
+  const handlePostAuth = async (userData: { user: any }) => {
+    // 1. Update auth store + react-query cache
+    setUser(userData.user);
+    queryClient.setQueryData(AUTH_KEYS.currentUser, userData.user);
+
+    // 2. Merge guest cart (idempotent, guarded against double calls)
+    const mergedCart = await syncGuestCartToServer();
+
+    // 3. Update cart query cache with the confirmed server cart
+    if (mergedCart) {
+      queryClient.setQueryData(CART_KEYS.cart, mergedCart);
+    } else {
+      // No guest items to merge – just refresh the server cart
+      queryClient.invalidateQueries({ queryKey: CART_KEYS.cart });
+    }
+
+    // 4. Refresh user-specific data
+    queryClient.invalidateQueries({ queryKey: ["orders"] });
+    queryClient.invalidateQueries({ queryKey: ["addresses"] });
+  };
+
   const loginMutation = useMutation({
     mutationFn: (credentials: LoginPayload) => authService.login(credentials),
     onSuccess: async (data) => {
-      setUser(data.user);
-      queryClient.setQueryData(AUTH_KEYS.currentUser, data.user);
-      await syncGuestCartToServer();
-      queryClient.invalidateQueries({ queryKey: ["cart"] });
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
-      queryClient.invalidateQueries({ queryKey: ["addresses"] });
+      await handlePostAuth(data);
       toast.success(`Welcome back, ${data.user.name}!`);
     },
     onError: (err: any) => {
@@ -65,10 +96,7 @@ export function useAuth() {
   const registerMutation = useMutation({
     mutationFn: (payload: RegisterPayload) => authService.register(payload),
     onSuccess: async (data) => {
-      setUser(data.user);
-      queryClient.setQueryData(AUTH_KEYS.currentUser, data.user);
-      await syncGuestCartToServer();
-      queryClient.invalidateQueries({ queryKey: ["cart"] });
+      await handlePostAuth(data);
       toast.success("Account created successfully! Welcome to Maghora.");
     },
     onError: (err: any) => {
@@ -107,4 +135,3 @@ export function useAuth() {
     refetchUser,
   };
 }
-

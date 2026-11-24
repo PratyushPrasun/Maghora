@@ -235,3 +235,109 @@ export async function clearCart(userId: string) {
     message: "Cart cleared successfully",
   };
 }
+
+/**
+ * Merge guest cart items into the authenticated user's cart.
+ *
+ * This operation is **idempotent**: for each guest item, if the variant
+ * already exists in the user's cart we take the *maximum* of the two
+ * quantities (guest vs server) instead of blindly adding.  Re-running
+ * the same merge therefore never inflates quantities.
+ *
+ * Invalid / unavailable products are silently skipped so a single bad
+ * item cannot block the whole merge.
+ */
+export async function mergeGuestCart(
+  userId: string,
+  guestItems: CartInput[]
+) {
+  // De-duplicate guest items by variantId (take highest quantity)
+  const deduped = new Map<string, CartInput>();
+  for (const item of guestItems) {
+    const existing = deduped.get(item.variantId);
+    if (!existing || item.quantity > existing.quantity) {
+      deduped.set(item.variantId, item);
+    }
+  }
+
+  const errors: Array<{ variantId: string; reason: string }> = [];
+
+  for (const [, guestItem] of deduped) {
+    try {
+      // Validate product + variant availability
+      const { variant } = await getAvailableVariant(
+        guestItem.productId,
+        guestItem.variantId
+      );
+
+      const availableStock = variant.stockOnHand - variant.reservedStock;
+      const cappedQty = Math.min(guestItem.quantity, availableStock, 20);
+
+      if (cappedQty < 1) {
+        errors.push({
+          variantId: guestItem.variantId,
+          reason: "Out of stock",
+        });
+        continue;
+      }
+
+      const existing = await CartItem.findOne({
+        userId,
+        variantId: guestItem.variantId,
+      });
+
+      if (existing) {
+        // Idempotent merge: take the higher quantity (don't add)
+        const mergedQty = Math.min(
+          Math.max(existing.quantity, cappedQty),
+          availableStock,
+          20
+        );
+        if (mergedQty !== existing.quantity) {
+          existing.quantity = mergedQty;
+          existing.productId = new Types.ObjectId(guestItem.productId);
+          await existing.save();
+        }
+      } else {
+        try {
+          await CartItem.create({
+            userId,
+            productId: guestItem.productId,
+            variantId: guestItem.variantId,
+            quantity: cappedQty,
+          });
+        } catch (err: any) {
+          // Duplicate key – another concurrent merge already created it
+          if (err?.code === 11000) {
+            const concurrent = await CartItem.findOne({
+              userId,
+              variantId: guestItem.variantId,
+            });
+            if (concurrent) {
+              const mergedQty = Math.min(
+                Math.max(concurrent.quantity, cappedQty),
+                availableStock,
+                20
+              );
+              if (mergedQty !== concurrent.quantity) {
+                concurrent.quantity = mergedQty;
+                await concurrent.save();
+              }
+            }
+          } else {
+            throw err;
+          }
+        }
+      }
+    } catch (err: any) {
+      errors.push({
+        variantId: guestItem.variantId,
+        reason: err?.message || "Unknown error",
+      });
+    }
+  }
+
+  const cart = await getCart(userId);
+
+  return { cart, errors };
+}

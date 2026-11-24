@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { cartService, AddCartItemPayload } from "@/services/cart.service";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -11,7 +11,6 @@ import {
   updateGuestCartItem,
   removeGuestCartItem,
   clearGuestCart,
-  syncGuestCartToServer,
 } from "@/lib/guest-cart";
 import { toast } from "sonner";
 import { ICart } from "@/types/api";
@@ -54,17 +53,13 @@ export function useCart() {
     }
   }, [user]);
 
-  // Sync guest cart to server as soon as user is authenticated
-  useEffect(() => {
-    if (user) {
-      const guest = getGuestCart();
-      if (guest.items.length > 0) {
-        syncGuestCartToServer().then(() => {
-          refetch();
-        });
-      }
-    }
-  }, [user, refetch]);
+  // ----------------------------------------------------------------
+  // NOTE: The duplicate syncGuestCartToServer() effect that was here
+  // has been REMOVED.  Guest→server merge is now handled exclusively
+  // in useAuth (login/register onSuccess) via the idempotent
+  // /cart/merge endpoint.  This eliminates the race condition where
+  // both useAuth and useCart would fire the merge simultaneously.
+  // ----------------------------------------------------------------
 
   // Listen for guest cart updates across components / windows
   useEffect(() => {

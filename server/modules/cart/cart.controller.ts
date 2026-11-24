@@ -6,6 +6,7 @@ import {
   updateCartItem,
   removeCartItem,
   clearCart,
+  mergeGuestCart,
 } from "./cart.service.js";
 
 function getUserId(req: Request): string {
@@ -119,6 +120,31 @@ export async function clearMyCart(
     res.status(200).json({
       success: true,
       data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function mergeCart(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const { cart, errors } = await mergeGuestCart(
+      getUserId(req),
+      req.body.items
+    );
+
+    res.status(200).json({
+      success: true,
+      message:
+        errors.length > 0
+          ? `Merged with ${errors.length} item(s) skipped`
+          : "Guest cart merged successfully",
+      data: cart,
+      ...(errors.length > 0 && { skipped: errors }),
     });
   } catch (error) {
     next(error);

@@ -9,6 +9,14 @@ export interface AddCartItemPayload {
   variant?: IProductVariant;
 }
 
+export interface MergeCartPayload {
+  items: Array<{
+    productId: string;
+    variantId: string;
+    quantity: number;
+  }>;
+}
+
 export const cartService = {
   async getCart(): Promise<ICart> {
     const response = await apiClient.get<ApiResponse<ICart>>("/cart");
@@ -37,5 +45,14 @@ export const cartService = {
 
   async clearCart(): Promise<void> {
     await apiClient.delete<ApiResponse<{ message: string }>>("/cart");
+  },
+
+  /**
+   * Merge guest cart items into the authenticated user's server cart.
+   * The backend performs an idempotent merge (max-quantity, not additive).
+   */
+  async mergeGuestCart(payload: MergeCartPayload): Promise<ICart> {
+    const response = await apiClient.post<ApiResponse<ICart>>("/cart/merge", payload);
+    return response.data.data;
   },
 };

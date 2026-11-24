@@ -1,7 +1,7 @@
 "use client";
 
 import { ICart, ICartItem, IProduct, IProductVariant } from "@/types/api";
-import { AddCartItemPayload, cartService } from "@/services/cart.service";
+import { cartService } from "@/services/cart.service";
 import { apiClient } from "@/lib/api-client";
 
 const GUEST_CART_STORAGE_KEY = "maghora_guest_cart";
@@ -19,26 +19,23 @@ function notifyCartUpdate() {
   }
 }
 
+const EMPTY_CART: ICart = {
+  items: [],
+  itemCount: 0,
+  subtotalPaise: 0,
+  hasUnavailableItems: false,
+};
+
 export function getGuestCart(): ICart {
   const storage = getStorage();
   if (!storage) {
-    return {
-      items: [],
-      itemCount: 0,
-      subtotalPaise: 0,
-      hasUnavailableItems: false,
-    };
+    return { ...EMPTY_CART };
   }
 
   try {
     const raw = storage.getItem(GUEST_CART_STORAGE_KEY);
     if (!raw) {
-      return {
-        items: [],
-        itemCount: 0,
-        subtotalPaise: 0,
-        hasUnavailableItems: false,
-      };
+      return { ...EMPTY_CART };
     }
 
     const parsed = JSON.parse(raw) as Partial<ICart>;
@@ -58,12 +55,7 @@ export function getGuestCart(): ICart {
       hasUnavailableItems,
     };
   } catch {
-    return {
-      items: [],
-      itemCount: 0,
-      subtotalPaise: 0,
-      hasUnavailableItems: false,
-    };
+    return { ...EMPTY_CART };
   }
 }
 
@@ -75,7 +67,7 @@ export function saveGuestCart(cart: ICart): void {
     storage.setItem(GUEST_CART_STORAGE_KEY, JSON.stringify(cart));
     notifyCartUpdate();
   } catch (err) {
-    console.error("Failed to save guest cart", err);
+    console.error("[Maghora] Failed to save guest cart", err);
   }
 }
 
@@ -86,19 +78,20 @@ export function clearGuestCart(): ICart {
       storage.removeItem(GUEST_CART_STORAGE_KEY);
       notifyCartUpdate();
     } catch (err) {
-      console.error("Failed to clear guest cart", err);
+      console.error("[Maghora] Failed to clear guest cart", err);
     }
   }
 
-  return {
-    items: [],
-    itemCount: 0,
-    subtotalPaise: 0,
-    hasUnavailableItems: false,
-  };
+  return { ...EMPTY_CART };
 }
 
-export async function addGuestCartItem(payload: AddCartItemPayload): Promise<ICart> {
+export async function addGuestCartItem(payload: {
+  productId: string;
+  variantId: string;
+  quantity: number;
+  product?: IProduct;
+  variant?: IProductVariant;
+}): Promise<ICart> {
   const currentCart = getGuestCart();
   const existingIndex = currentCart.items.findIndex(
     (item) => item.variantId === payload.variantId
@@ -120,7 +113,7 @@ export async function addGuestCartItem(payload: AddCartItemPayload): Promise<ICa
           product.variants?.[0];
       }
     } catch (e) {
-      console.warn("Could not fetch product details for guest cart fallback", e);
+      console.warn("[Maghora] Could not fetch product details for guest cart fallback", e);
     }
   }
 
@@ -224,21 +217,61 @@ export function removeGuestCartItem(itemId: string): ICart {
   return updatedCart;
 }
 
-export async function syncGuestCartToServer(): Promise<void> {
-  const guestCart = getGuestCart();
-  if (!guestCart.items || guestCart.items.length === 0) return;
+// ---------------------------------------------------------------------------
+// Guest → Server merge (called once after login/register)
+// ---------------------------------------------------------------------------
 
-  for (const item of guestCart.items) {
-    try {
-      await cartService.addItem({
+/** Guard to prevent concurrent or duplicate merge operations */
+let _mergeInProgress = false;
+
+/**
+ * Merge the localStorage guest cart into the authenticated user's server
+ * cart via the dedicated `/cart/merge` endpoint.
+ *
+ * Key properties:
+ * - Idempotent: re-running the same merge does not inflate quantities.
+ * - Atomic: guest cart is cleared only after the server confirms success.
+ * - Guarded: concurrent calls are coalesced (only one runs at a time).
+ *
+ * Returns the confirmed server cart, or `null` when there was nothing to
+ * merge or the merge was already in progress.
+ */
+export async function syncGuestCartToServer(): Promise<ICart | null> {
+  if (_mergeInProgress) {
+    console.log("[Maghora] Guest cart merge already in progress – skipping duplicate call");
+    return null;
+  }
+
+  const guestCart = getGuestCart();
+  if (!guestCart.items || guestCart.items.length === 0) {
+    return null;
+  }
+
+  _mergeInProgress = true;
+
+  try {
+    console.log(
+      `[Maghora] Merging ${guestCart.items.length} guest item(s) to server cart`
+    );
+
+    const mergedCart = await cartService.mergeGuestCart({
+      items: guestCart.items.map((item) => ({
         productId: item.productId,
         variantId: item.variantId,
         quantity: item.quantity,
-      });
-    } catch (err) {
-      console.error("Failed to sync guest cart item to server", item, err);
-    }
-  }
+      })),
+    });
 
-  clearGuestCart();
+    // Only clear guest cart AFTER the server confirmed the merge
+    clearGuestCart();
+
+    console.log("[Maghora] Guest cart merge completed successfully");
+    return mergedCart;
+  } catch (err) {
+    console.error("[Maghora] Guest cart merge failed – guest cart preserved", err);
+    // Do NOT clear guest cart on failure so the user can retry
+    return null;
+  } finally {
+    _mergeInProgress = false;
+  }
 }
