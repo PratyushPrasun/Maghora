@@ -6,6 +6,7 @@ import { validate } from "../../middlewares/validate.js";
 import {
   addCartItemSchema,
   updateCartItemSchema,
+  mergeCartSchema,
 } from "./cart.validation.js";
 
 import {
@@ -14,6 +15,7 @@ import {
   updateItem,
   removeItem,
   clearMyCart,
+  mergeCart,
 } from "./cart.controller.js";
 
 const router = Router();
@@ -27,6 +29,12 @@ router.post(
   "/items",
   validate(addCartItemSchema),
   addItem
+);
+
+router.post(
+  "/merge",
+  validate(mergeCartSchema),
+  mergeCart
 );
 
 router.patch(
