@@ -132,9 +132,17 @@ export async function mergeCart(
   next: NextFunction
 ) {
   try {
+    const userId = getUserId(req);
+    const incomingCount = Array.isArray(req.body?.items) ? req.body.items.length : 0;
+    console.info(`[Cart] Guest cart merge started userId=${userId} items=${incomingCount}`);
+
     const { cart, errors } = await mergeGuestCart(
-      getUserId(req),
+      userId,
       req.body.items
+    );
+
+    console.info(
+      `[Cart] Guest cart merge completed userId=${userId} mergedCount=${cart.items.length} skipped=${errors.length}`
     );
 
     res.status(200).json({
@@ -147,6 +155,7 @@ export async function mergeCart(
       ...(errors.length > 0 && { skipped: errors }),
     });
   } catch (error) {
+    console.error("[Cart] Guest cart merge failed:", error instanceof Error ? error.message : error);
     next(error);
   }
 }

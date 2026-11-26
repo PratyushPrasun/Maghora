@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { cartService, AddCartItemPayload } from "@/services/cart.service";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -12,12 +12,11 @@ import {
   removeGuestCartItem,
   clearGuestCart,
 } from "@/lib/guest-cart";
+import { AUTH_KEYS, CART_KEYS } from "@/lib/query-keys";
 import { toast } from "sonner";
 import { ICart } from "@/types/api";
 
-export const CART_KEYS = {
-  cart: ["cart"] as const,
-};
+export { CART_KEYS };
 
 const EMPTY_CART: ICart = {
   items: [],
@@ -28,8 +27,15 @@ const EMPTY_CART: ICart = {
 
 export function useCart() {
   const queryClient = useQueryClient();
-  const { user } = useAuthStore();
+  const { user, logout: storeLogout } = useAuthStore();
   const { openCart } = useCartStore();
+
+  const handleUnauthorized = () => {
+    console.warn("[Maghora] Cart API returned unauthorized (401) — clearing expired auth state");
+    storeLogout();
+    queryClient.setQueryData(AUTH_KEYS.currentUser, null);
+    queryClient.removeQueries({ queryKey: CART_KEYS.cart });
+  };
 
   const {
     data: serverCart,
@@ -38,7 +44,18 @@ export function useCart() {
     refetch,
   } = useQuery({
     queryKey: CART_KEYS.cart,
-    queryFn: () => cartService.getCart(),
+    queryFn: async () => {
+      try {
+        const fetched = await cartService.getCart();
+        console.info("[Maghora] Authenticated cart fetched");
+        return fetched;
+      } catch (err: any) {
+        if (err?.statusCode === 401) {
+          handleUnauthorized();
+        }
+        throw err;
+      }
+    },
     enabled: Boolean(user),
     staleTime: 30 * 1000,
   });
@@ -49,17 +66,13 @@ export function useCart() {
   // Initialize guest cart on client mount
   useEffect(() => {
     if (!user) {
-      setGuestCartState(getGuestCart());
+      const initialGuestCart = getGuestCart();
+      setGuestCartState(initialGuestCart);
+      console.info(
+        `[Maghora] Guest cart initialized (${initialGuestCart.itemCount} item(s))`
+      );
     }
   }, [user]);
-
-  // ----------------------------------------------------------------
-  // NOTE: The duplicate syncGuestCartToServer() effect that was here
-  // has been REMOVED.  Guest→server merge is now handled exclusively
-  // in useAuth (login/register onSuccess) via the idempotent
-  // /cart/merge endpoint.  This eliminates the race condition where
-  // both useAuth and useCart would fire the merge simultaneously.
-  // ----------------------------------------------------------------
 
   // Listen for guest cart updates across components / windows
   useEffect(() => {
@@ -97,6 +110,11 @@ export function useCart() {
       openCart();
     },
     onError: (err: any) => {
+      if (err?.statusCode === 401) {
+        handleUnauthorized();
+        toast.error("Your session expired. Please sign in again to continue.");
+        return;
+      }
       toast.error(err?.message || "Could not add item to cart");
     },
   });
@@ -116,6 +134,11 @@ export function useCart() {
       }
     },
     onError: (err: any) => {
+      if (err?.statusCode === 401) {
+        handleUnauthorized();
+        toast.error("Your session expired. Please sign in again to continue.");
+        return;
+      }
       toast.error(err?.message || "Could not update item quantity");
     },
   });
@@ -136,6 +159,11 @@ export function useCart() {
       toast.success("Item removed from cart");
     },
     onError: (err: any) => {
+      if (err?.statusCode === 401) {
+        handleUnauthorized();
+        toast.error("Your session expired. Please sign in again to continue.");
+        return;
+      }
       toast.error(err?.message || "Could not remove item");
     },
   });
@@ -156,6 +184,11 @@ export function useCart() {
       toast.success("Cart cleared");
     },
     onError: (err: any) => {
+      if (err?.statusCode === 401) {
+        handleUnauthorized();
+        toast.error("Your session expired. Please sign in again to continue.");
+        return;
+      }
       toast.error(err?.message || "Could not clear cart");
     },
   });

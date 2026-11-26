@@ -17,9 +17,33 @@ app.set(
 
 app.use(helmet());
 
-const allowedOrigins = [
-  ...new Set([env.CLIENT_URL, env.ADMIN_URL, env.FRONTEND_URL]),
-];
+const baseOrigins = [env.CLIENT_URL, env.ADMIN_URL, env.FRONTEND_URL];
+const allowedOriginsSet = new Set<string>();
+
+for (const origin of baseOrigins) {
+  allowedOriginsSet.add(origin);
+  try {
+    const parsed = new URL(origin);
+    const portSuffix = parsed.port ? `:${parsed.port}` : "";
+    if (parsed.hostname.startsWith("www.")) {
+      allowedOriginsSet.add(
+        `${parsed.protocol}//${parsed.hostname.slice(4)}${portSuffix}`
+      );
+    } else if (
+      parsed.hostname !== "localhost" &&
+      parsed.hostname !== "127.0.0.1" &&
+      parsed.hostname.split(".").length === 2
+    ) {
+      allowedOriginsSet.add(
+        `${parsed.protocol}//www.${parsed.hostname}${portSuffix}`
+      );
+    }
+  } catch {
+    // Ignore invalid URL strings; env validation enforces valid origins.
+  }
+}
+
+const allowedOrigins = [...allowedOriginsSet];
 
 app.use(
   cors({

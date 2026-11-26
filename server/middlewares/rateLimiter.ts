@@ -1,5 +1,4 @@
-
-import { rateLimit } from "express-rate-limit";
+import { rateLimit, ipKeyGenerator } from "express-rate-limit";
 import { RedisStore } from "rate-limit-redis";
 
 import type { Express, RequestHandler } from "express";
@@ -36,9 +35,11 @@ export const initializeRateLimiters = (
   }
 
   // General API rate limiter.
+  // Keys authenticated users by userId / sessionId so traffic routed
+  // through same-origin frontend proxies does not collide on a single IP.
   const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    limit: 100,
+    limit: 600,
 
     standardHeaders: "draft-8",
     legacyHeaders: false,
@@ -47,6 +48,16 @@ export const initializeRateLimiters = (
 
     passOnStoreError: false,
 
+    keyGenerator: (req) => {
+      if (req.session?.userId) {
+        return `user:${req.session.userId}`;
+      }
+      if (req.sessionID) {
+        return `sid:${req.sessionID}`;
+      }
+      return ipKeyGenerator(req.ip || "unknown");
+    },
+
     message: {
       success: false,
       message: "Too many requests. Please try again later.",
@@ -54,9 +65,12 @@ export const initializeRateLimiters = (
   });
 
   // Authentication rate limiter.
+  // Only failed auth attempts count against the budget so legitimate
+  // logins/registrations behind shared NAT or frontend proxies are not blocked.
   authLimiterInstance = rateLimit({
     windowMs: 15 * 60 * 1000,
-    limit: 5,
+    limit: 10,
+    skipSuccessfulRequests: true,
 
     standardHeaders: "draft-8",
     legacyHeaders: false,
@@ -64,6 +78,18 @@ export const initializeRateLimiters = (
     store: createRedisStore("rl:auth:"),
 
     passOnStoreError: false,
+
+    keyGenerator: (req) => {
+      const ipKey = ipKeyGenerator(req.ip || "unknown");
+      const rawIdentifier =
+        typeof req.body?.identifier === "string"
+          ? req.body.identifier
+          : typeof req.body?.email === "string"
+            ? req.body.email
+            : "";
+      const normalized = rawIdentifier.trim().toLowerCase();
+      return normalized ? `${ipKey}:${normalized}` : ipKey;
+    },
 
     message: {
       success: false,

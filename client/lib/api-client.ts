@@ -1,7 +1,13 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "axios";
 
-const API_BASE_URL =
+const UPSTREAM_API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+
+// In the browser, route all API calls through our same-origin Next.js proxy (/api)
+// so session cookies (maghora.sid) are stored and sent as first-party cookies
+// across all browsers (including Incognito, Safari ITP, and mobile browsers).
+const API_BASE_URL =
+  typeof window !== "undefined" ? "/api" : UPSTREAM_API_URL;
 
 export class ApiClientError extends Error {
   statusCode: number;
@@ -17,7 +23,7 @@ export class ApiClientError extends Error {
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 20000,
+  timeout: 30000,
   withCredentials: true, // Required for session cookie maghora.sid
   headers: {
     "Content-Type": "application/json",
@@ -29,6 +35,7 @@ export const apiClient: AxiosInstance = axios.create({
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 1000;
 const RETRYABLE_STATUS_CODES = new Set([408, 429, 502, 503, 504]);
+const IDEMPOTENT_METHODS = new Set(["get", "head", "options", "put", "delete"]);
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -52,18 +59,24 @@ apiClient.interceptors.response.use(
   async (error: AxiosError<{ success?: boolean; message?: string; errors?: Array<{ field?: string; message: string }> }>) => {
     const config = error.config as InternalAxiosRequestConfig | undefined;
 
-    // ---- Automatic retry for transient server / network errors ----
+    // ---- Automatic retry ONLY for idempotent / safe requests ----
     if (config) {
+      const method = (config.method || "get").toLowerCase();
+      const url = config.url || "";
+      const isSafeToRetry =
+        IDEMPOTENT_METHODS.has(method) || url.includes("/cart/merge");
+
       const retryCount = parseInt(
         (config.headers["x-retry-count"] as string) || "0",
         10
       );
 
       const isRetryable =
-        // Network error (no response at all)
-        (!error.response && error.code !== "ERR_CANCELED") ||
-        // Server returned a retryable status
-        (error.response && RETRYABLE_STATUS_CODES.has(error.response.status));
+        isSafeToRetry &&
+        (
+          (!error.response && error.code !== "ERR_CANCELED") ||
+          (error.response && RETRYABLE_STATUS_CODES.has(error.response.status))
+        );
 
       if (isRetryable && retryCount < MAX_RETRIES) {
         config.headers["x-retry-count"] = String(retryCount + 1);
@@ -87,12 +100,6 @@ apiClient.interceptors.response.use(
             `Request failed with status code ${status}`;
 
       const clientError = new ApiClientError(message, status, data?.errors);
-
-      // 401 Unauthorized handling (session expired or unauthenticated)
-      if (status === 401) {
-        // We do not force hard redirect in API interceptor to prevent redirect loops on public pages
-        // The auth state hook or route guards handle route protection
-      }
 
       return Promise.reject(clientError);
     } else if (error.request) {
