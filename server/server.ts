@@ -26,6 +26,8 @@ import cartRoutes from "./modules/cart/cart.routes.js";
 import orderRoutes from "./modules/orders/order.routes.js";
 import addressRoutes from "./modules/addresses/address.routes.js";
 import paymentRoutes from "./modules/payments/payment.routes.js";
+import adminOrderRoutes from "./modules/orders/order.admin-routes.js";
+import adminCustomerRoutes from "./modules/users/user.admin-routes.js";
 import {
   createStandardOrderController,
   verifyStandardPaymentController,
@@ -68,6 +70,10 @@ const startServer = async (): Promise<void> => {
     app.use("/api/addresses", addressRoutes);
 
     app.use("/api/payments", paymentRoutes);
+
+    // Admin-specific order and customer management routes.
+    app.use("/api/admin/orders", adminOrderRoutes);
+    app.use("/api/admin/customers", adminCustomerRoutes);
 
     // Razorpay Standard Checkout endpoints
     app.post("/api/create-order", createStandardOrderController);
