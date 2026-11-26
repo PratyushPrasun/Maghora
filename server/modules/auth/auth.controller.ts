@@ -15,7 +15,7 @@ import {
   resetUserPassword,
 } from "./password-reset.service.js";
 
-import { COOKIE_NAME, cookieOptions } from "../../config/cookie.js";
+import { COOKIE_NAME, getCookieOptions } from "../../config/cookie.js";
 
 const regenerateSession = async (
   req: Request
@@ -62,6 +62,7 @@ export const register = async (
   const user = await registerUser(req.body);
 
   await createAuthenticatedSession(req, user);
+  console.info(`[Auth] User registered userId=${user._id.toString()}`);
 
   return res.status(201).json({
     success: true,
@@ -83,6 +84,7 @@ export const login = async (
   );
 
   await createAuthenticatedSession(req, user);
+  console.info(`[Auth] Login succeeded userId=${user._id.toString()}`);
 
   return res.status(200).json({
     success: true,
@@ -105,7 +107,7 @@ export const logout = async (
     });
   });
 
-  res.clearCookie(COOKIE_NAME, cookieOptions);
+  res.clearCookie(COOKIE_NAME, getCookieOptions(req));
 
   return res.status(200).json({
     success: true,

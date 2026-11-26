@@ -2,9 +2,10 @@
 
 import { ICart, ICartItem, IProduct, IProductVariant } from "@/types/api";
 import { cartService } from "@/services/cart.service";
-import { apiClient } from "@/lib/api-client";
+import { apiClient, ApiClientError } from "@/lib/api-client";
 
 const GUEST_CART_STORAGE_KEY = "maghora_guest_cart";
+const MAX_ITEM_QUANTITY = 20;
 
 function getStorage(): Storage | null {
   if (typeof window !== "undefined" && window.localStorage) {
@@ -26,6 +27,54 @@ const EMPTY_CART: ICart = {
   hasUnavailableItems: false,
 };
 
+function sanitizeGuestItems(rawItems: unknown[]): ICartItem[] {
+  const byVariant = new Map<string, ICartItem>();
+
+  for (const raw of rawItems) {
+    if (!raw || typeof raw !== "object") continue;
+    const item = raw as Partial<ICartItem>;
+
+    if (
+      typeof item.productId !== "string" ||
+      !item.productId.trim() ||
+      typeof item.variantId !== "string" ||
+      !item.variantId.trim()
+    ) {
+      continue;
+    }
+
+    const rawQty = Number(item.quantity);
+    if (!Number.isFinite(rawQty) || rawQty < 1) continue;
+    const quantity = Math.min(Math.floor(rawQty), MAX_ITEM_QUANTITY);
+
+    const pricePaise = Number(item.pricePaise) || 0;
+    const mrpPaise = Number(item.mrpPaise) || pricePaise;
+
+    const existing = byVariant.get(item.variantId);
+    const mergedQuantity = existing
+      ? Math.min(existing.quantity + quantity, MAX_ITEM_QUANTITY)
+      : quantity;
+
+    byVariant.set(item.variantId, {
+      cartItemId: `guest_${item.variantId}`,
+      productId: item.productId,
+      variantId: item.variantId,
+      productName: item.productName || "Makhana Flavour",
+      productSlug: item.productSlug ?? null,
+      weightGrams: item.weightGrams ?? null,
+      pricePaise,
+      mrpPaise,
+      quantity: mergedQuantity,
+      available: item.available !== false,
+      currentStock:
+        typeof item.currentStock === "number" ? item.currentStock : MAX_ITEM_QUANTITY,
+      lineTotalPaise: pricePaise * mergedQuantity,
+    });
+  }
+
+  return Array.from(byVariant.values());
+}
+
 export function getGuestCart(): ICart {
   const storage = getStorage();
   if (!storage) {
@@ -39,11 +88,12 @@ export function getGuestCart(): ICart {
     }
 
     const parsed = JSON.parse(raw) as Partial<ICart>;
-    const items: ICartItem[] = Array.isArray(parsed.items) ? parsed.items : [];
+    const rawItems = Array.isArray(parsed.items) ? parsed.items : [];
+    const items = sanitizeGuestItems(rawItems);
 
-    const itemCount = items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+    const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
     const subtotalPaise = items.reduce(
-      (sum, item) => sum + (item.lineTotalPaise || 0),
+      (sum, item) => sum + (item.available ? item.lineTotalPaise : 0),
       0
     );
     const hasUnavailableItems = items.some((item) => item.available === false);
@@ -92,6 +142,11 @@ export async function addGuestCartItem(payload: {
   product?: IProduct;
   variant?: IProductVariant;
 }): Promise<ICart> {
+  if (!payload.productId || !payload.variantId) {
+    throw new ApiClientError("Invalid product or variant selection", 400);
+  }
+
+  const addQty = Math.max(1, Math.min(Math.floor(payload.quantity || 1), MAX_ITEM_QUANTITY));
   const currentCart = getGuestCart();
   const existingIndex = currentCart.items.findIndex(
     (item) => item.variantId === payload.variantId
@@ -100,10 +155,12 @@ export async function addGuestCartItem(payload: {
   let product: IProduct | undefined = payload.product;
   let variant: IProductVariant | undefined = payload.variant;
 
-  // Fallback: If product or variant were not passed directly, attempt to fetch product
+  // Fallback: fetch product catalog details when caller did not pass full objects
   if (!product || !variant) {
     try {
-      const response = await apiClient.get<any>("/products");
+      const response = await apiClient.get<any>("/products", {
+        params: { limit: 100 },
+      });
       const products: IProduct[] = response.data?.data?.products || [];
       const foundProduct = products.find((p) => p._id === payload.productId);
       if (foundProduct) {
@@ -117,26 +174,44 @@ export async function addGuestCartItem(payload: {
     }
   }
 
+  if (variant && (variant.isAvailable === false || variant.isActive === false)) {
+    throw new ApiClientError("This product variant is currently out of stock", 409);
+  }
+
   const pricePaise = variant?.pricePaise ?? 0;
   const mrpPaise = variant?.mrpPaise ?? pricePaise;
   const weightGrams = variant?.weightGrams ?? null;
   const productName = product?.name ?? "Makhana Flavour";
   const productSlug = product?.slug ?? null;
-  const currentStock = variant?.stockOnHand ?? 99;
+  const currentStock =
+    typeof variant?.stockOnHand === "number"
+      ? Math.max(0, variant.stockOnHand - (variant.reservedStock ?? 0))
+      : MAX_ITEM_QUANTITY;
 
+  if (currentStock < 1) {
+    throw new ApiClientError("This product variant is currently out of stock", 409);
+  }
+
+  const maxAllowed = Math.min(currentStock, MAX_ITEM_QUANTITY);
   let newItems = [...currentCart.items];
 
   if (existingIndex > -1) {
     const existing = newItems[existingIndex];
-    const newQty = Math.min(existing.quantity + payload.quantity, 20);
+    const newQty = Math.min(existing.quantity + addQty, maxAllowed);
+    if (existing.quantity >= maxAllowed) {
+      throw new ApiClientError(`Maximum available quantity is ${maxAllowed}`, 409);
+    }
     newItems[existingIndex] = {
       ...existing,
       quantity: newQty,
       pricePaise,
       mrpPaise,
+      currentStock: maxAllowed,
+      available: true,
       lineTotalPaise: pricePaise * newQty,
     };
   } else {
+    const initialQty = Math.min(addQty, maxAllowed);
     const newItem: ICartItem = {
       cartItemId: `guest_${payload.variantId}`,
       productId: payload.productId,
@@ -146,10 +221,10 @@ export async function addGuestCartItem(payload: {
       weightGrams,
       pricePaise,
       mrpPaise,
-      quantity: payload.quantity,
+      quantity: initialQty,
       available: true,
-      currentStock,
-      lineTotalPaise: pricePaise * payload.quantity,
+      currentStock: maxAllowed,
+      lineTotalPaise: pricePaise * initialQty,
     };
     newItems.unshift(newItem);
   }
@@ -170,14 +245,15 @@ export async function addGuestCartItem(payload: {
 
 export function updateGuestCartItem(itemId: string, quantity: number): ICart {
   const currentCart = getGuestCart();
-  const boundedQty = Math.max(1, Math.min(quantity, 20));
+  const boundedQty = Math.max(1, Math.min(Math.floor(quantity), MAX_ITEM_QUANTITY));
 
   const newItems = currentCart.items.map((item) => {
     if (item.cartItemId === itemId || item.variantId === itemId) {
+      const clamped = Math.min(boundedQty, Math.max(1, item.currentStock || MAX_ITEM_QUANTITY));
       return {
         ...item,
-        quantity: boundedQty,
-        lineTotalPaise: item.pricePaise * boundedQty,
+        quantity: clamped,
+        lineTotalPaise: item.pricePaise * clamped,
       };
     }
     return item;
@@ -190,7 +266,7 @@ export function updateGuestCartItem(itemId: string, quantity: number): ICart {
     items: newItems,
     itemCount,
     subtotalPaise,
-    hasUnavailableItems: false,
+    hasUnavailableItems: newItems.some((item) => !item.available),
   };
 
   saveGuestCart(updatedCart);
@@ -210,7 +286,7 @@ export function removeGuestCartItem(itemId: string): ICart {
     items: newItems,
     itemCount,
     subtotalPaise,
-    hasUnavailableItems: false,
+    hasUnavailableItems: newItems.some((item) => !item.available),
   };
 
   saveGuestCart(updatedCart);
@@ -218,28 +294,26 @@ export function removeGuestCartItem(itemId: string): ICart {
 }
 
 // ---------------------------------------------------------------------------
-// Guest → Server merge (called once after login/register)
+// Guest → Server merge (single-flight, idempotent, safe against failure)
 // ---------------------------------------------------------------------------
 
-/** Guard to prevent concurrent or duplicate merge operations */
-let _mergeInProgress = false;
+let _activeMergePromise: Promise<ICart | null> | null = null;
 
 /**
  * Merge the localStorage guest cart into the authenticated user's server
  * cart via the dedicated `/cart/merge` endpoint.
  *
  * Key properties:
+ * - Single-flight: concurrent calls await the same in-flight promise.
  * - Idempotent: re-running the same merge does not inflate quantities.
- * - Atomic: guest cart is cleared only after the server confirms success.
- * - Guarded: concurrent calls are coalesced (only one runs at a time).
- *
- * Returns the confirmed server cart, or `null` when there was nothing to
- * merge or the merge was already in progress.
+ * - Atomic: guest cart is cleared ONLY after the server confirms success.
+ * - Throws on failure so callers know whether auth (401) or network failed,
+ *   while preserving the guest cart in localStorage.
  */
 export async function syncGuestCartToServer(): Promise<ICart | null> {
-  if (_mergeInProgress) {
-    console.log("[Maghora] Guest cart merge already in progress – skipping duplicate call");
-    return null;
+  if (_activeMergePromise) {
+    console.info("[Maghora] Guest cart merge already in progress — awaiting active merge");
+    return _activeMergePromise;
   }
 
   const guestCart = getGuestCart();
@@ -247,31 +321,32 @@ export async function syncGuestCartToServer(): Promise<ICart | null> {
     return null;
   }
 
-  _mergeInProgress = true;
+  _activeMergePromise = (async () => {
+    try {
+      console.info(
+        `[Maghora] Guest cart merge started (${guestCart.items.length} item(s))`
+      );
 
-  try {
-    console.log(
-      `[Maghora] Merging ${guestCart.items.length} guest item(s) to server cart`
-    );
+      const mergedCart = await cartService.mergeGuestCart({
+        items: guestCart.items.map((item) => ({
+          productId: item.productId,
+          variantId: item.variantId,
+          quantity: item.quantity,
+        })),
+      });
 
-    const mergedCart = await cartService.mergeGuestCart({
-      items: guestCart.items.map((item) => ({
-        productId: item.productId,
-        variantId: item.variantId,
-        quantity: item.quantity,
-      })),
-    });
+      // Clear guest cart ONLY AFTER confirmed server persistence
+      clearGuestCart();
 
-    // Only clear guest cart AFTER the server confirmed the merge
-    clearGuestCart();
+      console.info("[Maghora] Guest cart merge completed");
+      return mergedCart;
+    } catch (err) {
+      console.error("[Maghora] Guest cart merge failed — guest cart preserved", err);
+      throw err;
+    } finally {
+      _activeMergePromise = null;
+    }
+  })();
 
-    console.log("[Maghora] Guest cart merge completed successfully");
-    return mergedCart;
-  } catch (err) {
-    console.error("[Maghora] Guest cart merge failed – guest cart preserved", err);
-    // Do NOT clear guest cart on failure so the user can retry
-    return null;
-  } finally {
-    _mergeInProgress = false;
-  }
+  return _activeMergePromise;
 }

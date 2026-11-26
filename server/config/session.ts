@@ -1,10 +1,9 @@
-
 import session from "express-session";
 import { RedisStore } from "connect-redis";
 
 import { redisClient } from "./redis.js";
 import { env } from "./env.js";
-import { COOKIE_NAME, cookieOptions } from "./cookie.js";
+import { COOKIE_NAME, getCookieOptions } from "./cookie.js";
 
 const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000;
 
