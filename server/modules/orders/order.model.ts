@@ -211,6 +211,8 @@ const orderSchema = new Schema(
 );
 
 orderSchema.index({ userId: 1, createdAt: -1 });
+orderSchema.index({ createdAt: -1 });
+orderSchema.index({ paymentStatus: 1 });
 
 orderSchema.index(
   { userId: 1, idempotencyKey: 1 },

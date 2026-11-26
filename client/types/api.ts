@@ -224,6 +224,7 @@ export interface IOrder {
   paymentStatus: PaymentStatus;
   inventoryStatus: InventoryStatus;
   reservationExpiresAt: string;
+  paymentProvider?: string;
   paymentOrderId?: string | null;
   paymentId?: string | null;
   trackingNumber?: string | null;

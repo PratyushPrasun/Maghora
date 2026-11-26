@@ -1,29 +1,35 @@
 "use client";
 
 import React from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import {
   ArrowLeft,
-  ShoppingBag,
   MapPin,
-  Clock,
-  ShieldCheck,
-  CreditCard,
-  Truck,
-  AlertCircle,
+  User,
 } from "lucide-react";
-import { useMyOrder } from "@/hooks/useOrders";
+import { useAdminOrderDetail, useUpdateOrderStatus } from "@/hooks/useAdminDashboard";
 import { formatPrice, formatDate, formatWeight } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
+function getCustomerInfo(userId: any) {
+  if (!userId || typeof userId !== "object") return null;
+  return {
+    name: userId.name || "—",
+    email: userId.email || "—",
+    phone: userId.phone || "—",
+    id: userId._id || "",
+  };
+}
+
 export default function AdminOrderDetailPage() {
   const params = useParams();
   const orderId = (params?.id as string) || "";
-  const { data: order, isLoading } = useMyOrder(orderId);
+  const { data: order, isLoading } = useAdminOrderDetail(orderId);
+  const updateStatus = useUpdateOrderStatus();
 
   if (isLoading) {
     return (
@@ -47,6 +53,8 @@ export default function AdminOrderDetailPage() {
     );
   }
 
+  const customer = getCustomerInfo(order.userId);
+
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-16">
       {/* Top Header */}
@@ -63,15 +71,14 @@ export default function AdminOrderDetailPage() {
               Order #{order.orderNumber}
             </h1>
             <p className="text-xs text-muted-foreground mt-1">
-              Placed on {formatDate(order.createdAt)} • System ID: {order._id}
+              Placed on {formatDate(order.createdAt)} • ID: {order._id}
             </p>
           </div>
-
-          <div className="flex items-center gap-2">
-            <Badge variant={order.status === "delivered" ? "success" : "default"}>
-              Fulfillment: {order.status.replace("_", " ")}
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant={order.status === "delivered" ? "success" : order.status === "cancelled" ? "destructive" : "default"}>
+              Fulfillment: {order.status.replace(/_/g, " ")}
             </Badge>
-            <Badge variant={order.paymentStatus === "paid" ? "success" : "warning"}>
+            <Badge variant={order.paymentStatus === "paid" ? "success" : order.paymentStatus === "failed" ? "destructive" : "warning"}>
               Payment: {order.paymentStatus}
             </Badge>
           </div>
@@ -79,14 +86,13 @@ export default function AdminOrderDetailPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left: Items & Delivery Address */}
+        {/* Left: Items, Customer, Shipping */}
         <div className="lg:col-span-8 space-y-6">
           {/* Items */}
           <div className="rounded-3xl border border-border bg-card p-6 shadow-xs space-y-4">
             <h2 className="text-base font-bold text-foreground pb-3 border-b border-border/60">
               Purchased Line Items ({order.items?.length || 0})
             </h2>
-
             <div className="divide-y divide-border/60">
               {order.items?.map((item, idx) => (
                 <div key={idx} className="py-4 flex items-center justify-between gap-4 text-xs">
@@ -106,7 +112,6 @@ export default function AdminOrderDetailPage() {
                       </p>
                     </div>
                   </div>
-
                   <div className="text-right">
                     <span className="font-bold text-foreground text-sm">
                       {formatPrice(item.lineTotalPaise)}
@@ -120,13 +125,42 @@ export default function AdminOrderDetailPage() {
             </div>
           </div>
 
-          {/* Customer & Shipping */}
+          {/* Customer Info */}
+          {customer && (
+            <div className="rounded-3xl border border-border bg-card p-6 shadow-xs space-y-3">
+              <div className="flex items-center gap-2 pb-2 border-b border-border/60">
+                <User className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-bold text-foreground">Customer Information</h3>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div>
+                  <p className="text-muted-foreground">Name</p>
+                  <p className="font-semibold text-foreground">{customer.name}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Email</p>
+                  <p className="font-semibold text-foreground">{customer.email}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Phone</p>
+                  <p className="font-semibold text-foreground font-mono">{customer.phone}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Customer ID</p>
+                  <Link href={`/admin/customers/${customer.id}`} className="font-semibold text-primary hover:underline font-mono text-[11px]">
+                    {customer.id}
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Shipping Address */}
           <div className="rounded-3xl border border-border bg-card p-6 shadow-xs space-y-3">
             <div className="flex items-center gap-2 pb-2 border-b border-border/60">
               <MapPin className="h-4 w-4 text-primary" />
               <h3 className="text-sm font-bold text-foreground">Shipping Destination</h3>
             </div>
-
             <div className="text-xs space-y-1 text-foreground/80">
               <p className="font-bold text-sm text-foreground">
                 {order.shippingAddress.recipientName}
@@ -143,13 +177,12 @@ export default function AdminOrderDetailPage() {
           </div>
         </div>
 
-        {/* Right: Payment & Summary */}
+        {/* Right: Payment & Summary, Status Update */}
         <div className="lg:col-span-4 space-y-6">
           <div className="rounded-3xl border border-border bg-card p-6 shadow-xs space-y-4">
             <h3 className="text-base font-bold text-foreground pb-3 border-b border-border/60">
               Order Breakdown
             </h3>
-
             <div className="space-y-2 text-xs">
               <div className="flex justify-between text-muted-foreground">
                 <span>Subtotal</span>
@@ -157,7 +190,9 @@ export default function AdminOrderDetailPage() {
               </div>
               <div className="flex justify-between text-muted-foreground">
                 <span>Shipping</span>
-                <span className="font-semibold text-emerald-700">FREE</span>
+                <span className="font-semibold text-emerald-700">
+                  {order.shippingPaise > 0 ? formatPrice(order.shippingPaise) : "FREE"}
+                </span>
               </div>
               <div className="border-t border-border/80 pt-3 flex justify-between text-base font-bold text-foreground">
                 <span>Total Amount</span>
@@ -170,6 +205,10 @@ export default function AdminOrderDetailPage() {
                 <span>Inventory Lock:</span>
                 <span className="font-semibold uppercase text-foreground">{order.inventoryStatus}</span>
               </div>
+              <div className="flex justify-between">
+                <span>Payment Method:</span>
+                <span className="font-semibold text-foreground">Razorpay</span>
+              </div>
               {order.paymentOrderId && (
                 <div className="flex justify-between font-mono text-[11px]">
                   <span>Razorpay ID:</span>
@@ -178,9 +217,29 @@ export default function AdminOrderDetailPage() {
               )}
             </div>
           </div>
+
+          {/* Update Status */}
+          <div className="rounded-3xl border border-border bg-card p-6 shadow-xs space-y-4">
+            <h3 className="text-sm font-bold text-foreground pb-3 border-b border-border/60">
+              Update Fulfillment Status
+            </h3>
+            <div className="grid grid-cols-2 gap-2">
+              {["confirmed", "processing", "shipped", "delivered", "cancelled"].map((s) => (
+                <Button
+                  key={s}
+                  variant={order.status === s ? "default" : "outline"}
+                  size="sm"
+                  className="text-xs capitalize"
+                  disabled={order.status === s || updateStatus.isPending}
+                  onClick={() => updateStatus.mutate({ orderId: order._id, status: s })}
+                >
+                  {s.replace(/_/g, " ")}
+                </Button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
 }
-
