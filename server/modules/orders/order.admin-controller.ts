@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 
 import Order from "./order.model.js";
 import User from "../users/user.model.js";
+import { generateInvoiceForOrder } from "../invoices/invoice.service.js";
 
 /**
  * GET /api/admin/orders
@@ -200,6 +201,15 @@ export async function getOrderById(
       });
     }
 
+    if (
+      order.paymentProvider === "cod" &&
+      ["confirmed", "processing", "shipped", "delivered"].includes(status)
+    ) {
+      await generateInvoiceForOrder(order._id.toString()).catch((err) => {
+        console.error("[Invoice] COD invoice generation failed:", err);
+      });
+    }
+
     res.status(200).json({
       success: true,
       data: order,
@@ -257,6 +267,15 @@ export async function updateOrderStatus(
       return res.status(404).json({
         success: false,
         message: "Order not found",
+      });
+    }
+
+    if (
+      order.paymentProvider === "cod" &&
+      ["confirmed", "processing", "shipped", "delivered"].includes(status)
+    ) {
+      await generateInvoiceForOrder(order._id.toString()).catch((err) => {
+        console.error("[Invoice] COD invoice generation failed:", err);
       });
     }
 

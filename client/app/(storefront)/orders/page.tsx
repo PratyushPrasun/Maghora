@@ -10,19 +10,48 @@ import {
   CheckCircle2,
   AlertCircle,
   Truck,
+  FileText,
+  Download,
 } from "lucide-react";
 import { useMyOrders } from "@/hooks/useOrders";
+import { useMyInvoices } from "@/hooks/useInvoices";
+import { invoicesService } from "@/services/invoices.service";
 import { useAuth } from "@/hooks/useAuth";
 import { formatPrice, formatDate } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MithilaLotus } from "@/components/storefront/MithilaMotifs";
+import { toast } from "sonner";
 
 export default function OrdersPage() {
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { data: orders, isLoading: ordersLoading } = useMyOrders();
+  const { data: myInvoices } = useMyInvoices();
+  const [downloadingId, setDownloadingId] = React.useState<string | null>(null);
+
+  const invoiceByOrderId = React.useMemo(() => {
+    const map = new Map<string, NonNullable<typeof myInvoices>[number]>();
+    for (const inv of myInvoices || []) {
+      if (inv.documentType === "invoice") {
+        map.set(inv.orderId, inv);
+      }
+    }
+    return map;
+  }, [myInvoices]);
+
+  const handleDownloadInvoice = async (invoiceId: string, invoiceNumber: string) => {
+    try {
+      setDownloadingId(invoiceId);
+      await invoicesService.downloadMyInvoicePdf(invoiceId, invoiceNumber);
+      toast.success(`Downloaded ${invoiceNumber}`);
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to download invoice");
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   React.useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -152,6 +181,30 @@ export default function OrdersPage() {
                       {formatPrice(order.totalPaise)}
                     </span>
                   </div>
+
+                  {(() => {
+                    const inv = invoiceByOrderId.get(order._id);
+                    if (!inv) {
+                      return (
+                        <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-[#7B685F] px-2.5 py-1 rounded-lg bg-[#F8EEDC]/60">
+                          <FileText className="h-3 w-3" /> Pending Invoice
+                        </span>
+                      );
+                    }
+                    return (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDownloadInvoice(inv._id, inv.invoiceNumber)}
+                        disabled={downloadingId === inv._id}
+                        isLoading={downloadingId === inv._id}
+                        className="rounded-xl text-xs font-serif font-bold uppercase tracking-wider gap-1.5 border-[#702C32]/30 text-[#702C32] hover:bg-[#702C32] hover:text-[#F8EEDC] min-h-[38px] px-3"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        <span>Invoice</span>
+                      </Button>
+                    );
+                  })()}
 
                   <Link href={`/orders/${order._id}`}>
                     <Button

@@ -8,8 +8,13 @@ import {
   ArrowLeft,
   MapPin,
   User,
+  FileText,
+  Download,
 } from "lucide-react";
 import { useAdminOrderDetail, useUpdateOrderStatus } from "@/hooks/useAdminDashboard";
+import { useGenerateInvoiceForOrder } from "@/hooks/useInvoices";
+import { invoicesService } from "@/services/invoices.service";
+import { toast } from "sonner";
 import { formatPrice, formatDate, formatWeight } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,6 +35,20 @@ export default function AdminOrderDetailPage() {
   const orderId = (params?.id as string) || "";
   const { data: order, isLoading } = useAdminOrderDetail(orderId);
   const updateStatus = useUpdateOrderStatus();
+  const generateInvoice = useGenerateInvoiceForOrder();
+  const [downloadingInvoice, setDownloadingInvoice] = React.useState(false);
+
+  const handleGenerateAndDownload = async () => {
+    try {
+      setDownloadingInvoice(true);
+      const inv = await generateInvoice.mutateAsync(orderId);
+      await invoicesService.downloadAdminInvoicePdf(inv._id, inv.invoiceNumber);
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to prepare invoice");
+    } finally {
+      setDownloadingInvoice(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -81,6 +100,20 @@ export default function AdminOrderDetailPage() {
             <Badge variant={order.paymentStatus === "paid" ? "success" : order.paymentStatus === "failed" ? "destructive" : "warning"}>
               Payment: {order.paymentStatus}
             </Badge>
+            {(order.paymentStatus === "paid" || order.paymentProvider === "cod") && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleGenerateAndDownload}
+                disabled={downloadingInvoice}
+                isLoading={downloadingInvoice}
+                className="gap-1.5 text-xs"
+              >
+                <FileText className="h-3.5 w-3.5" />
+                <Download className="h-3.5 w-3.5" />
+                <span>Invoice PDF</span>
+              </Button>
+            )}
           </div>
         </div>
       </div>

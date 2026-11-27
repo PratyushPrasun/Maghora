@@ -35,6 +35,10 @@ export interface IProduct extends Document {
   isFeatured: boolean;
   isBestseller: boolean;
   isDeleted: boolean;
+  hsnCode?: string;
+  gstRate?: number;
+  unit?: string;
+  flavour?: string;
   seo: {
     title: string;
     description: string;
@@ -207,6 +211,34 @@ const productSchema = new Schema<IProduct>(
     isDeleted: {
       type: Boolean,
       default: false,
+    },
+
+    hsnCode: {
+      type: String,
+      trim: true,
+      maxlength: 20,
+      default: "",
+    },
+
+    gstRate: {
+      type: Number,
+      min: 0,
+      max: 28,
+      default: undefined,
+    },
+
+    unit: {
+      type: String,
+      trim: true,
+      maxlength: 30,
+      default: "Packet",
+    },
+
+    flavour: {
+      type: String,
+      trim: true,
+      maxlength: 80,
+      default: "",
     },
 
     seo: {

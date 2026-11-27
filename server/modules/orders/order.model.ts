@@ -25,7 +25,11 @@ export interface IOrderItem {
   productId: Types.ObjectId;
   variantId: Types.ObjectId;
   productName: string;
+  flavour?: string;
   sku: string;
+  hsnCode?: string;
+  gstRate?: number;
+  unit?: string;
   weightGrams: number;
   imageUrl: string | null;
   pricePaise: number;
@@ -49,9 +53,25 @@ const orderItemSchema = new Schema<IOrderItem>(
       type: String,
       required: true,
     },
+    flavour: {
+      type: String,
+      default: "",
+    },
     sku: {
       type: String,
       required: true,
+    },
+    hsnCode: {
+      type: String,
+      default: "",
+    },
+    gstRate: {
+      type: Number,
+      default: undefined,
+    },
+    unit: {
+      type: String,
+      default: "Packet",
     },
     weightGrams: {
       type: Number,
@@ -138,9 +158,38 @@ const orderSchema = new Schema(
       default: 0,
     },
 
+    couponCode: {
+      type: String,
+      default: null,
+    },
+
+    couponDiscountPaise: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    otherChargesPaise: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
     totalPaise: {
       type: Number,
       required: true,
+    },
+
+    billingAddress: {
+      type: shippingAddressSchema,
+      default: null,
+    },
+
+    customerGstin: {
+      type: String,
+      default: null,
+      trim: true,
+      uppercase: true,
     },
 
     status: {
@@ -182,8 +231,13 @@ const orderSchema = new Schema(
 
     paymentProvider: {
       type: String,
-      enum: ["razorpay"],
+      enum: ["razorpay", "cod"],
       default: "razorpay",
+    },
+
+    paymentMethod: {
+      type: String,
+      default: null,
     },
 
     paymentOrderId: {
