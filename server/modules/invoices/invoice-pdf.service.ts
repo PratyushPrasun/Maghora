@@ -89,7 +89,7 @@ export async function generateInvoicePdfBuffer(
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
       size: "A4",
-      margin: 32,
+      margins: { top: 28, bottom: 12, left: 32, right: 32 },
       bufferPages: true,
       info: {
         Title: `${invoice.invoiceType} - ${invoice.invoiceNumber}`,
@@ -522,8 +522,63 @@ export async function generateInvoicePdfBuffer(
     // =========================================================================
     // 4. PRICE SUMMARY, TAX BREAKDOWN & AMOUNT IN WORDS
     // =========================================================================
-    const summaryHeight = 205;
-    if (y + summaryHeight > pageHeight - footerReserveHeight) {
+    const summaryRows: Array<{ label: string; value: string; bold?: boolean }> = [
+      { label: "Subtotal", value: formatPaiseToInr(invoice.subtotalPaise) },
+    ];
+    if (invoice.productDiscountPaise > 0) {
+      summaryRows.push({
+        label: "Product Discounts",
+        value: `- ${formatPaiseToInr(invoice.productDiscountPaise)}`,
+      });
+    }
+    if (invoice.couponDiscountPaise > 0) {
+      summaryRows.push({
+        label: invoice.couponCode
+          ? `Coupon (${invoice.couponCode})`
+          : "Coupon Discount",
+        value: `- ${formatPaiseToInr(invoice.couponDiscountPaise)}`,
+      });
+    }
+    summaryRows.push({
+      label: "Shipping Charges",
+      value: formatPaiseToInr(invoice.shippingChargesPaise),
+    });
+    if (invoice.otherChargesPaise > 0) {
+      summaryRows.push({
+        label: "Other Charges",
+        value: formatPaiseToInr(invoice.otherChargesPaise),
+      });
+    }
+    summaryRows.push({
+      label: "Taxable Amount",
+      value: formatPaiseToInr(invoice.taxableAmountPaise),
+      bold: true,
+    });
+    if (invoice.sellerDetailsSnapshot.isGstRegistered) {
+      if (invoice.placeOfSupply.isInterstate) {
+        summaryRows.push({
+          label: "IGST",
+          value: formatPaiseToInr(invoice.taxBreakdown.igstPaise),
+        });
+      } else {
+        summaryRows.push({
+          label: "CGST",
+          value: formatPaiseToInr(invoice.taxBreakdown.cgstPaise),
+        });
+        summaryRows.push({
+          label: "SGST",
+          value: formatPaiseToInr(invoice.taxBreakdown.sgstPaise),
+        });
+      }
+      summaryRows.push({
+        label: "Total GST",
+        value: formatPaiseToInr(invoice.taxBreakdown.totalGstPaise),
+        bold: true,
+      });
+    }
+
+    const boxRowsHeight = summaryRows.length * 14 + 64;
+    if (y + boxRowsHeight > pageHeight - footerReserveHeight) {
       doc.addPage();
       y = 32;
     }
@@ -592,62 +647,6 @@ export async function generateInvoicePdfBuffer(
     }
 
     // Right panel: Financial Breakdown
-    const summaryRows: Array<{ label: string; value: string; bold?: boolean }> = [
-      { label: "Subtotal", value: formatPaiseToInr(invoice.subtotalPaise) },
-    ];
-    if (invoice.productDiscountPaise > 0) {
-      summaryRows.push({
-        label: "Product Discounts",
-        value: `- ${formatPaiseToInr(invoice.productDiscountPaise)}`,
-      });
-    }
-    if (invoice.couponDiscountPaise > 0) {
-      summaryRows.push({
-        label: invoice.couponCode
-          ? `Coupon (${invoice.couponCode})`
-          : "Coupon Discount",
-        value: `- ${formatPaiseToInr(invoice.couponDiscountPaise)}`,
-      });
-    }
-    summaryRows.push({
-      label: "Shipping Charges",
-      value: formatPaiseToInr(invoice.shippingChargesPaise),
-    });
-    if (invoice.otherChargesPaise > 0) {
-      summaryRows.push({
-        label: "Other Charges",
-        value: formatPaiseToInr(invoice.otherChargesPaise),
-      });
-    }
-    summaryRows.push({
-      label: "Taxable Amount",
-      value: formatPaiseToInr(invoice.taxableAmountPaise),
-      bold: true,
-    });
-    if (invoice.sellerDetailsSnapshot.isGstRegistered) {
-      if (invoice.placeOfSupply.isInterstate) {
-        summaryRows.push({
-          label: "IGST",
-          value: formatPaiseToInr(invoice.taxBreakdown.igstPaise),
-        });
-      } else {
-        summaryRows.push({
-          label: "CGST",
-          value: formatPaiseToInr(invoice.taxBreakdown.cgstPaise),
-        });
-        summaryRows.push({
-          label: "SGST",
-          value: formatPaiseToInr(invoice.taxBreakdown.sgstPaise),
-        });
-      }
-      summaryRows.push({
-        label: "Total GST",
-        value: formatPaiseToInr(invoice.taxBreakdown.totalGstPaise),
-        bold: true,
-      });
-    }
-
-    const boxRowsHeight = summaryRows.length * 14 + 64;
     doc
       .roundedRect(rightSummaryX, summaryStartY, rightSummaryWidth, boxRowsHeight, 4)
       .fillAndStroke(COLORS.ivoryLight, COLORS.border);
@@ -729,7 +728,8 @@ export async function generateInvoicePdfBuffer(
     const range = doc.bufferedPageRange();
     for (let i = 0; i < range.count; i++) {
       doc.switchToPage(range.start + i);
-      const footerY = pageHeight - 54;
+      doc.page.margins.bottom = 0;
+      const footerY = pageHeight - 58;
 
       doc
         .moveTo(leftMargin, footerY)
@@ -745,8 +745,8 @@ export async function generateInvoicePdfBuffer(
         .text(
           invoice.footerNote || "Thank you for choosing Maghora!",
           leftMargin,
-          footerY + 7,
-          { width: contentWidth, align: "center" }
+          footerY + 6,
+          { width: contentWidth, align: "center", lineBreak: false }
         );
 
       doc
@@ -756,8 +756,8 @@ export async function generateInvoicePdfBuffer(
         .text(
           invoice.footerTagline || "Ancient roots Modern Taste",
           leftMargin,
-          footerY + 18,
-          { width: contentWidth, align: "center" }
+          footerY + 17,
+          { width: contentWidth, align: "center", lineBreak: false }
         );
 
       const policyText = `Website: ${seller.website || "https://maghora.in"}  |  Return & Refund Policy: ${seller.returnPolicyUrl || "https://maghora.in/terms"}  |  Support: ${seller.supportEmail}`;
@@ -765,18 +765,20 @@ export async function generateInvoicePdfBuffer(
         .font(FONT_REG)
         .fontSize(6.8)
         .fillColor(COLORS.mutedBrown)
-        .text(policyText, leftMargin, footerY + 30, {
+        .text(policyText, leftMargin, footerY + 29, {
           width: contentWidth - 60,
           align: "left",
+          lineBreak: false,
         });
 
       doc
         .font(FONT_REG)
         .fontSize(6.8)
         .fillColor(COLORS.mutedBrown)
-        .text(`Page ${i + 1} of ${range.count}`, leftMargin, footerY + 30, {
+        .text(`Page ${i + 1} of ${range.count}`, leftMargin, footerY + 29, {
           width: contentWidth,
           align: "right",
+          lineBreak: false,
         });
     }
 
