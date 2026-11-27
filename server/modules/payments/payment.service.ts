@@ -7,6 +7,10 @@ import { env } from "../../config/env.js";
 import Order from "../orders/order.model.js";
 import Product from "../products/product.model.js";
 import Payment from "./payment.model.js";
+import {
+  generateInvoiceForOrder,
+  syncInvoiceRefundStatus,
+} from "../invoices/invoice.service.js";
 
 function httpError(message: string, statusCode: number) {
   return Object.assign(new Error(message), { statusCode });
@@ -302,6 +306,7 @@ async function processCapturedPayment(data: {
   razorpayPaymentId: string;
   amount: number;
   currency: string;
+  method?: string | null;
 }) {
   if (data.currency !== "INR" || !Number.isSafeInteger(data.amount)) {
     throw httpError("Invalid payment amount or currency", 400);
@@ -329,6 +334,7 @@ async function processCapturedPayment(data: {
 
   const session = await mongoose.startSession();
   let shouldRefund = false;
+  let shouldGenerateInvoice = false;
 
   try {
     await session.withTransaction(async () => {
@@ -349,6 +355,7 @@ async function processCapturedPayment(data: {
         order.paymentStatus === "paid" &&
         order.paymentId === data.razorpayPaymentId
       ) {
+        shouldGenerateInvoice = true;
         return;
       }
 
@@ -483,9 +490,26 @@ async function processCapturedPayment(data: {
       payment.status = "captured";
       payment.razorpayPaymentId = data.razorpayPaymentId;
       await payment.save({ session });
+      shouldGenerateInvoice = true;
     });
   } finally {
     await session.endSession();
+  }
+
+  if (shouldGenerateInvoice && !shouldRefund) {
+    try {
+      await generateInvoiceForOrder(paymentRecord.orderId.toString(), {
+        paymentMethod: data.method || "Razorpay",
+        paymentReference: data.razorpayPaymentId,
+        razorpayPaymentId: data.razorpayPaymentId,
+        razorpayOrderId: data.razorpayOrderId,
+      });
+    } catch (invoiceError) {
+      console.error(
+        `[Invoice] Failed to generate invoice for order=${paymentRecord.orderId.toString()}:`,
+        invoiceError
+      );
+    }
   }
 
   if (shouldRefund) {
@@ -636,6 +660,7 @@ export async function verifyCheckoutPayment(
       razorpayPaymentId: providerPayment.id,
       amount: providerPayment.amount,
       currency: providerPayment.currency,
+      method: providerPayment.method || null,
     });
   } else if (providerPayment.status === "authorized") {
     await Payment.updateOne(
@@ -725,6 +750,7 @@ export async function processRazorpayWebhookEvent(event: any) {
       razorpayPaymentId: entity.id,
       amount: entity.amount,
       currency: entity.currency,
+      method: entity.method || null,
     });
 
     return;
@@ -779,6 +805,14 @@ export async function processRazorpayWebhookEvent(event: any) {
         },
         { $set: { paymentStatus: "refunded" } }
       );
+
+      await syncInvoiceRefundStatus(
+        payment.orderId.toString(),
+        refund.amount || payment.refundAmountPaise || payment.amountPaise,
+        refund.id
+      ).catch((err) => {
+        console.error("[Invoice] Failed to sync refund status:", err);
+      });
     }
 
     return;

@@ -15,8 +15,12 @@ import {
   ArrowLeft,
   ShieldCheck,
   AlertCircle,
+  FileText,
+  Download,
 } from "lucide-react";
 import { useMyOrder } from "@/hooks/useOrders";
+import { useMyInvoiceByOrder } from "@/hooks/useInvoices";
+import { invoicesService } from "@/services/invoices.service";
 import { paymentsService } from "@/services/payments.service";
 import { formatPrice, formatDate, formatWeight } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -30,7 +34,9 @@ export default function OrderDetailPage() {
   const router = useRouter();
 
   const { data: order, isLoading, error, refetch } = useMyOrder(orderId);
+  const { data: invoice, isLoading: invoiceLoading } = useMyInvoiceByOrder(orderId);
   const [isRetryingPayment, setIsRetryingPayment] = useState(false);
+  const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
 
   if (isLoading) {
     return (
@@ -94,6 +100,19 @@ export default function OrderDetailPage() {
       toast.error(err?.message || "Could not re-initiate payment.");
     } finally {
       setIsRetryingPayment(false);
+    }
+  };
+
+  const handleDownloadInvoice = async () => {
+    if (!invoice) return;
+    try {
+      setIsDownloadingInvoice(true);
+      await invoicesService.downloadMyInvoicePdf(invoice._id, invoice.invoiceNumber);
+      toast.success("Invoice PDF downloaded");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to download invoice PDF");
+    } finally {
+      setIsDownloadingInvoice(false);
     }
   };
 
@@ -236,6 +255,45 @@ export default function OrderDetailPage() {
                 <span>Free Insured Delivery Across India</span>
               </div>
             </div>
+          </div>
+
+          {/* Invoice & Tax Document */}
+          <div className="rounded-2xl sm:rounded-3xl border border-[#E8D7BE] bg-white p-4 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-xs font-serif font-bold uppercase tracking-wider text-[#702C32]">
+                <FileText className="h-4 w-4" />
+                <span>Invoice & Tax Document</span>
+              </div>
+              {invoiceLoading ? (
+                <p className="text-xs text-[#7B685F]">Checking invoice availability...</p>
+              ) : invoice ? (
+                <>
+                  <p className="text-sm font-bold font-serif text-[#33251F]">
+                    {invoice.invoiceType} • {invoice.invoiceNumber}
+                  </p>
+                  <p className="text-xs text-[#7B685F]">
+                    Issued on {formatDate(invoice.issuedAt)} • Payment: {invoice.paymentStatus} ({invoice.paymentMethod})
+                  </p>
+                </>
+              ) : (
+                <p className="text-xs text-[#7B685F]">
+                  Invoice will be generated once payment is verified or the order is confirmed.
+                </p>
+              )}
+            </div>
+
+            {invoice && (
+              <Button
+                size="sm"
+                onClick={handleDownloadInvoice}
+                disabled={isDownloadingInvoice}
+                isLoading={isDownloadingInvoice}
+                className="shrink-0 bg-[#702C32] hover:bg-[#551F24] text-[#F8EEDC] text-xs font-serif font-bold uppercase tracking-wider h-10 px-5 gap-2"
+              >
+                <Download className="h-4 w-4" />
+                <span>Download Invoice</span>
+              </Button>
+            )}
           </div>
         </div>
       </div>

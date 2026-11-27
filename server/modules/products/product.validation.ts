@@ -99,6 +99,14 @@ export const createProductSchema = z.object({
 
   isBestseller: z.boolean().default(false),
 
+  hsnCode: z.string().trim().max(20).optional(),
+
+  gstRate: z.number().min(0).max(28).optional(),
+
+  unit: z.string().trim().max(30).optional(),
+
+  flavour: z.string().trim().max(80).optional(),
+
   seo: seoSchema,
 }).strict();
 
@@ -131,6 +139,14 @@ export const updateProductSchema = z.object({
   isFeatured: z.boolean().optional(),
 
   isBestseller: z.boolean().optional(),
+
+  hsnCode: z.string().trim().max(20).optional(),
+
+  gstRate: z.number().min(0).max(28).optional(),
+
+  unit: z.string().trim().max(30).optional(),
+
+  flavour: z.string().trim().max(80).optional(),
 
   seo: z.object({
     title: z.string().trim().max(70).optional(),
